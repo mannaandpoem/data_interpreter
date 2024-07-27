@@ -1,15 +1,49 @@
-import asyncio
-from asyncio import Queue
-from asyncio.subprocess import PIPE, STDOUT
-from typing import Optional
+import concurrent.futures
+import functools
+import platform
+import subprocess
+import threading
+from queue import Queue
 
 from metagpt.const import DEFAULT_WORKSPACE_ROOT, get_metagpt_package_root
-from metagpt.logs import logger
 from metagpt.tools.tool_registry import register_tool
+
+from di_project.utils.path_utils import converted_path
 from di_project.utils.report import END_MARKER_VALUE, TerminalReporter
 
-# SWE agent
+# Path to the bash script that sets up the default environment for the SWEAgent
 SWE_SETUP_PATH = get_metagpt_package_root() / "di_project/tools/swe_agent_commands/setup_default.sh"
+
+
+class TimeoutException(Exception):
+    pass
+
+
+def timeout_decorator(timeout):
+    """
+    Decorator to add a timeout to a function.
+
+    Args:
+        timeout (int): The timeout in seconds.
+
+    Returns:
+        function: The wrapped function with timeout.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(func, *args, **kwargs)
+                try:
+                    return future.result(timeout=timeout)
+                except concurrent.futures.TimeoutError:
+                    return f"TimeoutError: Timed out after {timeout} seconds"
+
+        return wrapper
+
+    return decorator
+
 
 @register_tool()
 class Terminal:
@@ -21,56 +55,79 @@ class Terminal:
     """
 
     def __init__(self):
-        self.shell_command = ["bash"]  # FIXME: should consider windows support later
+        self.is_windows = platform.system().lower() == "windows"
+
+        if self.is_windows:
+            # Specify the path to Git Bash executable
+            self.shell_command = ["C:/Program Files/Git/bin/bash.exe"]
+            self.executable = None  # bash.exe is directly executable
+        else:
+            self.shell_command = ["bash"]
+            self.executable = "/bin/bash"
+
         self.command_terminator = "\n"
-        self.stdout_queue = Queue(maxsize=1000)
-        self.observer = TerminalReporter()
-        self.process: Optional[asyncio.subprocess.Process] = None
 
-    async def _start_process(self):
         # Start a persistent shell process
-        self.process = await asyncio.create_subprocess_exec(
-            *self.shell_command, stdin=PIPE, stdout=PIPE, stderr=STDOUT, executable="bash"
+        self.process = subprocess.Popen(
+            self.shell_command,
+            shell=True,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            executable=self.executable,
         )
-        await self._check_state()
+        self.stdout_queue = Queue()
+        self.observer = TerminalReporter()
 
-    async def _check_state(self):
-        """
-        Check the state of the terminal, e.g. the current directory of the terminal process. Useful for agent to understand.
-        """
-        output = await self.run_command("pwd")
-        logger.info("The terminal is at:", output)
+        self._check_state()
 
-    async def run_command(self, cmd: str, daemon=False) -> str:
+    def _check_state(self):
+        """
+        Check the state of the terminal, e.g. the current directory of the terminal process. Useful for agent to
+        understand.
+        """
+        print("The terminal is at:", self.run_command("pwd"))
+
+    def run_command(self, cmd: str, daemon=False) -> str:
         """
         Executes a specified command in the terminal and streams the output back in real time.
         This command maintains state across executions, such as the current directory,
-        allowing for sequential commands to be contextually aware.
+        allowing for sequential commands to be contextually aware. The output from the
+        command execution is placed into `stdout_queue`, which can be consumed as needed.
 
         Args:
             cmd (str): The command to execute in the terminal.
-            daemon (bool): If True, executes the command in an asynchronous task, allowing
-                           the main program to continue execution.
+            daemon (bool): If True, executes the command in a background thread, allowing
+                           the main program to continue execution. The command's output is
+                           collected asynchronously in daemon mode and placed into `stdout_queue`.
+
         Returns:
             str: The command's output or an empty string if `daemon` is True. Remember that
-                 when `daemon` is True, use the `get_stdout_output` method to get the output.
+                 when `daemon` is True, the output is collected into `stdout_queue` and must
+                 be consumed from there.
+
+        Note:
+            If `stdout_queue` is not periodically consumed, it could potentially grow indefinitely,
+            consuming memory. Ensure that there's a mechanism in place to consume this queue,
+            especially during long-running or output-heavy command executions.
         """
-        if self.process is None:
-            await self._start_process()
 
         # Send the command
         self.process.stdin.write((cmd + self.command_terminator).encode())
         self.process.stdin.write(
             f'echo "{END_MARKER_VALUE}"{self.command_terminator}'.encode()  # write EOF
         )  # Unique marker to signal command end
-        await self.process.stdin.drain()
+        self.process.stdin.flush()
         if daemon:
-            asyncio.create_task(self._read_and_process_output(cmd))
+            threading.Thread(target=self._read_and_process_output, args=(cmd,), daemon=True).start()
             return ""
         else:
-            return await self._read_and_process_output(cmd)
+            try:
+                return self._read_and_process_output(cmd)
+            except TimeoutException:
+                return "Timeout"
 
-    async def execute_in_conda_env(self, cmd: str, env, daemon=False) -> str:
+    def execute_in_conda_env(self, cmd: str, env, daemon=False) -> str:
         """
         Executes a given command within a specified Conda environment automatically without
         the need for manual activation. Users just need to provide the name of the Conda
@@ -80,7 +137,7 @@ class Terminal:
             cmd (str): The command to execute within the Conda environment.
             env (str, optional): The name of the Conda environment to activate before executing the command.
                                  If not specified, the command will run in the current active environment.
-            daemon (bool): If True, the command is run in an asynchronous task, similar to `run_command`,
+            daemon (bool): If True, the command is run in a background thread, similar to `run_command`,
                            affecting error logging and handling in the same manner.
 
         Returns:
@@ -92,34 +149,20 @@ class Terminal:
             to ensure the specified environment is active for the command's execution.
         """
         cmd = f"conda run -n {env} {cmd}"
-        return await self.run_command(cmd, daemon=daemon)
+        return self.run_command(cmd, daemon=daemon)
 
-    async def get_stdout_output(self) -> str:
-        """
-        Retrieves all collected output from background running commands and returns it as a string.
-
-        Returns:
-            str: The collected output from background running commands, returned as a string.
-        """
-        output_lines = []
-        while not self.stdout_queue.empty():
-            line = await self.stdout_queue.get()
-            output_lines.append(line)
-        return "\n".join(output_lines)
-
-    async def _read_and_process_output(self, cmd, daemon=False) -> str:
-        async with self.observer as observer:
+    @timeout_decorator(timeout=300)
+    def _read_and_process_output(self, cmd):
+        with self.observer as observer:
             cmd_output = []
-            await observer.async_report(cmd + self.command_terminator, "cmd")
+            observer.report(cmd + self.command_terminator, "cmd")
             # report the command
             # Read the output until the unique marker is found.
             # We read bytes directly from stdout instead of text because when reading text,
             # '\r' is changed to '\n', resulting in excessive output.
             tmp = b""
             while True:
-                output = tmp + await self.process.stdout.read(1)
-                if not output:
-                    continue
+                output = tmp + self.process.stdout.read(1)
                 *lines, tmp = output.splitlines(True)
                 for line in lines:
                     line = line.decode()
@@ -127,20 +170,20 @@ class Terminal:
                     if ix >= 0:
                         line = line[0:ix]
                         if line:
-                            await observer.async_report(line, "output")
+                            observer.report(line, "output")
                             # report stdout in real-time
                             cmd_output.append(line)
                         return "".join(cmd_output)
                     # log stdout in real-time
-                    await observer.async_report(line, "output")
+                    observer.report(line, "output")
                     cmd_output.append(line)
-                    if daemon:
-                        await self.stdout_queue.put(line)
+                    self.stdout_queue.put(line)
 
-    async def close(self):
+    def close(self):
         """Close the persistent shell process."""
         self.process.stdin.close()
-        await self.process.wait()
+        self.process.terminate()
+        self.process.wait()
 
 
 @register_tool(include_functions=["run"])
@@ -155,11 +198,12 @@ class Bash(Terminal):
         super().__init__()
         self.start_flag = False
 
-    async def start(self):
-        await self.run_command(f"cd {DEFAULT_WORKSPACE_ROOT}")
-        await self.run_command(f"source {SWE_SETUP_PATH}")
+    def start(self):
+        # Source the setup script to set up the default environment
+        self.run_command(f"cd {converted_path(DEFAULT_WORKSPACE_ROOT)}")
+        self.run_command(f"source {converted_path(SWE_SETUP_PATH)}")
 
-    async def run(self, cmd) -> str:
+    def run(self, cmd) -> str:
         """
         Executes a bash command.
 
@@ -237,7 +281,13 @@ class Bash(Terminal):
         Note: Make sure to use these functions as per their defined arguments and behaviors.
         """
         if not self.start_flag:
-            await self.start()
+            self.start()
             self.start_flag = True
 
-        return await self.run_command(cmd)
+        return self.run_command(cmd)
+
+
+if __name__ == "__main__":
+    terminal = Terminal()
+    result = terminal.run_command("conda info --env")
+    print(result)

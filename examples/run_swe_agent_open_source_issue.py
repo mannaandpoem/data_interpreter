@@ -2,7 +2,7 @@ import asyncio
 
 from metagpt.logs import logger
 
-from di_project.roles.swe_agent import SWEAgent
+from di_project.roles.swe_agent_mgx import SWEAgent
 
 FIX_ISSUE1 = """
 Write a fix for this issue: https://github.com/langchain-ai/langchain/issues/20453, 
