@@ -6,6 +6,7 @@ from di_project.tools.libs import (
     gpt_v_generator,
     web_scraping,
     email_login,
+    terminal
 )
 
 _ = (
@@ -15,4 +16,5 @@ _ = (
     gpt_v_generator,
     web_scraping,
     email_login,
+    terminal
 )  # Avoid pre-commit error

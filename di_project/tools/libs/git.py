@@ -8,8 +8,8 @@ from typing import Optional, Union
 from github.Issue import Issue
 from github.PullRequest import PullRequest
 
-from metagpt.tools.tool_registry import register_tool
 from metagpt.utils.git_repository import GitRepository
+from di_project.tools.tool_registry import register_tool
 from pydantic import BaseModel
 
 

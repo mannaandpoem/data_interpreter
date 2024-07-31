@@ -11,7 +11,7 @@ from datasets import load_dataset, load_from_disk
 from github import Github
 
 from metagpt.logs import logger
-from di_project.prompts.prompt import (
+from di_project.prompts.swe_agent import (
     IMPORTANT_TIPS,
     MINIMAL_EXAMPLE,
     REPRODUCING_EXAMPLE,

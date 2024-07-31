@@ -4,7 +4,7 @@ from datetime import datetime
 
 from metagpt.const import DEFAULT_WORKSPACE_ROOT, METAGPT_ROOT
 
-from di_project.roles.swe_agent_mgx import SWEAgent
+from di_project.roles.data_interpreter_swe import SWEAgent
 from di_project.tools.libs.terminal import Terminal
 from di_project.tools.swe_agent_commands.swe_agent_utils import load_hf_dataset
 
