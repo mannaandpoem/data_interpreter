@@ -2,7 +2,7 @@ import asyncio
 
 from metagpt.logs import logger
 
-from di_project.roles.data_interpreter_swe import SWEAgent
+from di_project.roles.swe_agent import SWEAgent
 
 FIX_ISSUE1 = """
 Write a fix for this issue: https://github.com/langchain-ai/langchain/issues/20453, 
@@ -35,10 +35,14 @@ you can fix it on this repo https://github.com/garylin2099/simple_calculator
 
 NO_ENV_TIP = """
 Because the environment is not available, you DO NOT need to run and modify any existing test case files or
-add new test case files to ensure that the bug is fixed.
+add new test case files to ensure that the bug is fixed.  
+You need to use git tools to clone the repository, checkout a branch, commit your changes.
 """
 if __name__ == "__main__":
-    swe_agent = SWEAgent()
+    swe_agent = SWEAgent(
+        react_mode="plan_and_act",
+    )
+    swe_agent.cur_instance_id = "test_01"
     logger.info("**** Starting run ****")
     user_requirement_and_issue = FIX_ISSUE1 + NO_ENV_TIP
     asyncio.run(swe_agent.run(user_requirement_and_issue))

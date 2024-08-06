@@ -14,13 +14,6 @@ from metagpt.logs import logger
 from di_project.prompts.swe_agent import (
     IMPORTANT_TIPS,
     MINIMAL_EXAMPLE,
-    REPRODUCING_EXAMPLE,
-    REPRODUCING_REQUIREMENT,
-    SEPARATOR,
-    TESTING_EXAMPLE,
-    TESTING_REQUIREMENT,
-    TIP_FOR_REPRODUCING,
-    TIP_FOR_TESTING,
 )
 from metagpt.utils.common import CodeParser
 from di_project.utils.path_utils import converted_path
@@ -114,7 +107,7 @@ def filter_and_get_repo_info(
     for _, instance in subset.iterrows():
         instance_id = instance["instance_id"]
         base_commit = instance["base_commit"]
-        issue_description = instance["problem_statement"]
+        problem_statement = instance["problem_statement"]
         hints_text = instance["hints_text"] if instance["hints_text"] else "None"
         repo = instance["repo"]
         patch = instance["patch"]
@@ -133,7 +126,7 @@ def filter_and_get_repo_info(
             "instance_id": instance_id,
             "exit_status": "n/a",
             "base_commit": base_commit,
-            "issue_description": issue_description,
+            "problem_statement": problem_statement,
             "hints_text": hints_text,
             "patch": patch,
             "repo": repo,
@@ -244,42 +237,6 @@ def replace_action_for_nt(action, env_manager):
         pip_executor = converted_path(env_manager.env_pip_executor)
         action = action.replace("pip ", f"{pip_executor} ")
     return action
-
-
-def adjust_requirement(user_requirement, need_reproducing, need_testing):
-    # Based on the condition of need_reproducing and need_testing, adjust the user requirement
-    if need_reproducing and need_testing:
-        user_requirement += REPRODUCING_REQUIREMENT + TESTING_REQUIREMENT
-    elif need_reproducing:
-        user_requirement = REPRODUCING_REQUIREMENT
-    elif need_testing:
-        user_requirement += TESTING_REQUIREMENT
-    return user_requirement
-
-
-def adjust_examples(need_reproducing, need_testing):
-    if need_reproducing and need_testing:
-        examples = [TESTING_EXAMPLE, REPRODUCING_EXAMPLE, MINIMAL_EXAMPLE]
-    elif need_reproducing:
-        examples = [REPRODUCING_EXAMPLE, MINIMAL_EXAMPLE]
-    elif need_testing:
-        examples = [TESTING_EXAMPLE, MINIMAL_EXAMPLE]
-    else:
-        # Return the default example
-        examples = [MINIMAL_EXAMPLE]
-    return SEPARATOR.join(examples)
-
-
-def adjust_important_tips(need_reproducing, need_testing):
-    if need_reproducing and need_testing:
-        return IMPORTANT_TIPS + TIP_FOR_REPRODUCING + TIP_FOR_TESTING
-    elif need_reproducing:
-        return IMPORTANT_TIPS + TIP_FOR_REPRODUCING
-    elif need_testing:
-        return IMPORTANT_TIPS + TIP_FOR_TESTING
-    else:
-        # Return the default important tips
-        return IMPORTANT_TIPS
 
 
 def save_trajectory(traj_dir: Path, name: str, repo_info: dict, trajectory: list):

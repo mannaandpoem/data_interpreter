@@ -4,7 +4,7 @@ from datetime import datetime
 
 from metagpt.const import DEFAULT_WORKSPACE_ROOT, METAGPT_ROOT
 
-from di_project.roles.data_interpreter_swe import SWEAgent
+from di_project.roles.swe_agent import SWEAgent
 from di_project.tools.libs.terminal import Terminal
 from di_project.tools.swe_agent_commands.swe_agent_utils import load_hf_dataset
 
@@ -29,7 +29,7 @@ Your first action must be to navigate to the repository path `{repo_path}`.
 This issue occurred in version {version}, with the corresponding base commit being {base_commit}. You need to switch to the code version associated with this commit.
 All subsequent actions must be performed within this repository path. Do not leave this directory to execute any actions at any time.
 
-# INSTRUCTIONS:
+## INSTRUCTIONS:
 Now, you're going to solve this issue on your own from the perspective of a programmer. Your terminal session has started and you're in the repository's root directory. You can use any bash commands or the special interface to help you. Edit all the files you need. 
 Remember, YOU CAN ONLY ENTER ONE COMMAND AT A TIME. You should always wait for feedback after every command.
 """
@@ -58,11 +58,14 @@ async def run(instance, swe_result_dir):
 
     # 前处理
     terminal = Terminal()
-    await terminal.run_command(f"cd {repo_path} && git reset --hard && git clean -n -d && git clean -f -d")
-    await terminal.run_command("BRANCH=$(git remote show origin | awk '/HEAD branch/ {print $NF}')")
-    print(await terminal.run_command("echo $BRANCH"))
-    print(await terminal.run_command('git checkout "$BRANCH"'))
-    print(await terminal.run_command("git branch"))
+    if not repo_path.exists():
+        print(f"Repo not found, cloning...")
+        clone_command = f"git clone 'https://github.com/{instance['repo']}.git' {repo_path}"
+        print(terminal.run_command(clone_command))
+    base_commit = instance["base_commit"]
+    checkout_command = f"cd {repo_path} && git checkout -f {base_commit}" if base_commit else ""
+    print(terminal.run_command(checkout_command))
+    print(terminal.run_command("git branch"))
 
     user_requirement_and_issue = INSTANCE_TEMPLATE.format(
         issue=instance["problem_statement"],
@@ -71,9 +74,10 @@ async def run(instance, swe_result_dir):
         version=instance["version"],
         base_commit=instance["base_commit"],
     )
-
     print(f"**** Starting to run {instance['instance_id']}****")
     swe_agent = SWEAgent()
+    swe_agent.cur_instance_id = instance["instance_id"]
+    swe_agent.repo_path = repo_path
     swe_agent.run_eval = True
     await swe_agent.run(user_requirement_and_issue)
     save_predictions(swe_agent, instance, swe_result_dir)

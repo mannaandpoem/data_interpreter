@@ -1,25 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-@Time    : 2024/05/13
-@Author  : mannaandpoem
-@File    : swe_agent.py
-"""
 import json
 from pathlib import Path
 from typing import Literal, Optional, Dict, List, Union
 
-from datasets import load_dataset
-from pandas import DataFrame
-
 from metagpt.const import DEFAULT_WORKSPACE_ROOT, METAGPT_ROOT
 from metagpt.logs import logger
-from metagpt.roles.di.data_interpreter import DataInterpreter
 from pydantic import Field
 
 from metagpt.schema import AIMessage, Message
 
 from di_project.actions.write_analysis_code import WriteAnalysisCode
+from di_project.roles.data_interpreter import DataInterpreter
 from di_project.roles.swe_env import SWEEnv
 from di_project.schema import Task, TaskResult
 from di_project.tools.libs.terminal import Bash
@@ -29,12 +19,11 @@ from di_project.prompts.swe_agent import (
     NEXT_STEP_TEMPLATE,
     SUMMARY_PROMPT,
     SWE_AGENT_SYSTEM_TEMPLATE,
-    REFLECTION_TRAJ_PROMPT,
+    REFLECTION_TRAJ_PROMPT, MINIMAL_EXAMPLE, IMPORTANT_TIPS,
 )
 from di_project.tools.swe_agent_commands.swe_agent_utils import (
     extract_patch,
-    parse_thought_and_action, load_hf_dataset, adjust_requirement,
-    adjust_examples, adjust_important_tips, filter_and_get_repo_info,
+    parse_thought_and_action, load_hf_dataset, filter_and_get_repo_info,
 )
 from metagpt.utils.common import CodeParser
 
@@ -48,7 +37,7 @@ SWE_CMD_WORK_DIR = DEFAULT_WORKSPACE_ROOT / "swe_agent_workdir"
 
 CONSECUTIVE_LIMIT = 3
 EDIT_CONSECUTIVE_LIMIT = 3
-
+WINDOW_SIZE = 100
 TEST_REPO_DIR.mkdir(parents=True, exist_ok=True)
 SWE_CMD_WORK_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -77,79 +66,38 @@ class TrajectoryNode:
 
 class SWEAgent(DataInterpreter):
     name: str = "Swen"
-    profile: str = "Issue Solver"
-    goal: str = "Resolve GitHub issue"
     auto_run: bool = True
     use_plan: bool = True
     use_reflection: bool = False
     use_experience: bool = False
-    # tools: list[str] = []  # Use special symbol ["<all>"] to indicate use of all registered tools
     tools: list[str] = ["Bash"]
     tool_recommender: ToolRecommender = None
     max_react_loop: int = 30  # used for react mode
     react_mode: Literal["plan_and_act", "react"] = "react"
     user_requirement: str = ""
-    _bash_window_size: int = 100
+    _bash_window_size: int = WINDOW_SIZE
     _instruction: str = NEXT_STEP_TEMPLATE
     system_msg: List[str] = [SWE_AGENT_SYSTEM_TEMPLATE.format(WINDOW=100)]
     swe_env: SWEEnv = Field(default_factory=SWEEnv, exclude=True)
-    # Fetch the base commit and issue description from the dataset
-    fetch_from_dataset: bool = False
-    # The issue description
-    issue: str = ""
     # Path to the repository where the code is located
     repo_path: Path = SWE_CMD_WORK_DIR / "temp"
-    # repo_info includes the base commit, issue description, repo identifier and hints text
-    repo_info: Dict[str, Dict[str, str]] = {}
-    # The instance_id of the SWE-bench dataset
-    instance_ids: Optional[List[str]] = []
+    # Repository information
+    repo_info: Dict[str, str] = {}
+    # Current instance id
     cur_instance_id: str = ""
     # Trajectory of the agent
     trajectory: List[TrajectoryNode] = []
-    dataset_path: str = ""
-    # dataset is the filtered dataset based on the instance_ids
-    dataset: Optional[DataFrame] = None
-    exp_name: str = ""
-    # Determine if the agent needs summarizing the trajectory
-    need_summary: bool = False
-    # Determine if the agent needs reproducing
-    need_reproducing: bool = False
-    # Determine if the agent needs testing
-    need_testing: bool = False
-    # Determine if the agent needs to ensemble the results
-    need_ensemble: bool = False
-    # The number of iterations for the ensemble
-    ensemble_iterations: int = 2
     # The number of iterations for the agent to retry
     max_attempt: int = 2
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        # Based on the condition of need_reproducing and need_testing, adjust the user requirement
-        self.user_requirement = adjust_requirement(
-            user_requirement=self.user_requirement,
-            need_reproducing=self.need_reproducing,
-            need_testing=self.need_testing,
-        )
-        # self.user_requirement_and_issue = self.user_requirement
-        self.swe_result_dir = SWE_CMD_WORK_DIR / f"result_{self.config.llm.model}" / self.exp_name
+        self.swe_result_dir = SWE_CMD_WORK_DIR / f"result_{self.config.llm.model}"
         self.swe_result_dir.mkdir(parents=True, exist_ok=True)
         self.swe_env.terminal = Bash()
         self.set_actions([WriteAnalysisCode])   # Need Fix
         self._set_state(0)
         self._set_react_mode(react_mode=self.react_mode, max_react_loop=self.max_react_loop, auto_run=self.auto_run)
-
-        if self.fetch_from_dataset:
-            logger.info(f"loading {self.dataset_path} dataset")
-            dataset = load_dataset(self.dataset_path)
-
-            # Filter the dataset based on the instance_ids
-            self.dataset, self.repo_info = filter_and_get_repo_info(
-                dataset["test"].to_pandas(), "instance_id", self.swe_result_dir, self.instance_ids
-            )
-            # Update the instance_ids with the filtered dataset
-            self.instance_ids = self.dataset["instance_id"].tolist()
-            logger.info(f"Instance IDs: {self.instance_ids}")
 
     async def _react(self) -> Message:
         """Entry to one of three strategies by which Role reacts to the observed Message"""
@@ -157,11 +105,9 @@ class SWEAgent(DataInterpreter):
         reflection_plan = ""
         attempt = 0
 
-        while self.instance_ids:  # it can retry on current instance
-            self.cur_instance_id = self.instance_ids.pop()
-
+        while self.cur_instance_id:  # it can retry on current instance
             # Initialize the user requirement and issue
-            self._init_task_requirement(plan=reflection_plan)
+            self._init_task(plan=reflection_plan)
             attempt += 1
             rsp = await self._react_on_task()
 
@@ -169,21 +115,14 @@ class SWEAgent(DataInterpreter):
             if attempt < self.max_attempt and rsp.content.startswith("submit"):
                 # Reflect on the trajectory
                 reflection_plan = await self.reflect_traj(code_change=self.swe_env.terminal.run("git diff"))
-                # Try again this instance
-                self.instance_ids.insert(0, self.cur_instance_id)
-                self._clear_for_next_instance()
+            else:
+                self.cur_instance_id = ""
+            # Clear the working memory and trajectory
+            self._clear_for_next_instance()
 
         return rsp
 
     async def _react_on_task(self, current_task: Task = None) -> Union[Message, TaskResult]:
-        if self.use_experience:
-            from di_project.actions.use_experience import RetrieveExperiences
-            experiences = await RetrieveExperiences().run(query=current_task.instruction)
-        else:
-            experiences = ""
-
-        self.cur_instance_id = self.instance_ids.pop()
-        self._init_task_requirement()
         actions_taken = 0
         rsp = AIMessage(content="No actions taken yet")  # will be overwritten after Role _act
         submit_flag = True
@@ -192,8 +131,8 @@ class SWEAgent(DataInterpreter):
             # think
             has_todo = await self._think()
             if not has_todo:
-                if self.instance_ids:
-                    # make it to run other instance_ids
+                if self.cur_instance_id:
+                    # make it to run other instance
                     submit_flag = True
                     self.working_memory.clear()
                     continue
@@ -262,18 +201,15 @@ class SWEAgent(DataInterpreter):
         # Calculate the remaining iterations
         remaining_iterations = self.rc.max_react_loop - len(self.trajectory) // 2
         bash_state = json.loads(self.swe_env.terminal.run("state"))
-        examples = adjust_examples(need_reproducing=self.need_reproducing, need_testing=self.need_testing)
-        important_tips = adjust_important_tips(need_reproducing=self.need_reproducing, need_testing=self.need_testing)
 
         prompt = self._instruction.format(
             user_requirement_and_issue=self.user_requirement_and_issue,
             context=context if context else None,
-            examples=examples,
-            important_tips=important_tips,
+            examples=MINIMAL_EXAMPLE,
+            important_tips=IMPORTANT_TIPS,
             remaining_iterations=remaining_iterations,
             **bash_state,
         )
-
         response = await self.llm.aask(prompt, self.system_msg)
         self.add_to_working_memory(f"\nThought and Action(bash_command):\n{response}", "assistant")
         # Parse the thought and action
@@ -308,7 +244,7 @@ class SWEAgent(DataInterpreter):
         """Add the message to the working memory"""
         self.working_memory.add(Message(content=content, role=role))
         if self.working_memory.count() > memory_window and use_memory_window:
-            self.working_memory.pop(0)
+            self.working_memory.storage.pop()
 
     async def submit(self):
         """Submit the modified file by git in the terminal."""
@@ -321,8 +257,8 @@ class SWEAgent(DataInterpreter):
             logger.info(f"Diff output: {clear_diff}")
 
             # Add the patch and exit status to the repo_info
-            self.repo_info[self.cur_instance_id]["submission"] = clear_diff
-            self.repo_info[self.cur_instance_id]["exit_status"] = "submitted"
+            self.repo_info["submission"] = clear_diff
+            self.repo_info["exit_status"] = "submitted"
         except Exception as e:
             logger.error(f"Error during submission: {e}")
 
@@ -345,16 +281,9 @@ class SWEAgent(DataInterpreter):
         logger.info(f"Reflection of the trajectory:\n{response}")
         return reflect_plan
 
-    def _init_task_requirement(self, plan=""):
-        # Get the issue description from repo_info
-        self.user_requirement_and_issue = INSTANCE_TEMPLATE.format(
-            user_requirement=self.user_requirement
-            if not plan
-            else self.user_requirement + "\n ## Reflection:" + plan,
-            issue=self.issue,
-            hints_text=self.repo_info[self.cur_instance_id]["hints_text"] if self.repo_info else None,
-        )
-
+    def _init_task(self, plan=""):
+        # Get the issue description
+        self.user_requirement_and_issue = f"{self.user_requirement}\n## Plan\n{plan}" if plan else self.user_requirement
         logger.info(f"User Requirement:\n{self.user_requirement_and_issue}")
         # Add the user requirement and issue to the working memory and trajectory
         repo_path = converted_path(self.repo_path)
@@ -369,7 +298,7 @@ class SWEAgent(DataInterpreter):
         if len(last_actions) >= CONSECUTIVE_LIMIT and all(n.action.startswith(action_prefix) for n in last_actions):
             # Pop action to avoid the consecutive edit actions
             for _ in range(CONSECUTIVE_LIMIT - 1):
-                self.working_memory.pop()
+                self.working_memory.storage.pop()
             flag = True
 
         return flag
@@ -383,7 +312,7 @@ class SWEAgent(DataInterpreter):
         while self.planner.current_task:
             task = self.planner.current_task
             logger.info(f"ready to take on task {task}")
-
+            self._init_task(plan=self.planner.get_plan_status())
             # take on current task
             task_result = await self._react_on_task(task)
 
@@ -398,26 +327,3 @@ class SWEAgent(DataInterpreter):
     @property
     def working_memory(self):
         return self.rc.working_memory
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    dataset_path = "manna-ai/SWE-bench_Mini"  # "manna-ai/SWE-bench_Nano"  # "princeton-nlp/SWE-bench_Lite", "manna-ai/SWE-bench_Mini"
-    # instance_ids = ["django__django-15996"]  # "django__django-11099", "django__django-12700"
-    dataset = load_hf_dataset(dataset_name_or_path=dataset_path, cache_dir=DATA_DIR, split="test")
-    instance_ids = [instance["instance_id"] for instance in dataset]
-    requirement = """Fix the bug in the repo. Because the environment is not available, you DO NOT need to run and
-    # modify any existing test case files or add new test case files to ensure that the bug is fixed."""
-    swe_agent = SWEAgent(
-        user_requirement=requirement,
-        instance_ids=instance_ids,
-        fetch_from_dataset=True,
-        dataset_path=dataset_path,
-        need_reproducing=True,  # For reproducing the bug
-        need_testing=False,  # For executing the test suite
-        need_ensemble=False,
-        need_summary=False,
-        can_retry_submission=False,
-    )
-    asyncio.run(swe_agent.run(requirement))
