@@ -57,7 +57,6 @@ async def run(instance, swe_result_dir):
     swe_agent = SWEAgent()
     swe_agent.cur_instance_id = instance["instance_id"]
     swe_agent.repo_path = repo_path
-    swe_agent.run_eval = True
     await swe_agent.run(user_requirement_and_issue)
     save_predictions(swe_agent, instance, swe_result_dir)
     print(f"**** Finished running {instance['instance_id']}****")
@@ -66,7 +65,7 @@ async def run(instance, swe_result_dir):
 def save_predictions(swe_agent: SWEAgent, instance, swe_result_dir):
     output_file = swe_result_dir / "all_preds.jsonl"
     instance["model_name_or_path"] = swe_agent.config.llm.model
-    instance["model_patch"] = swe_agent.output_diff
+    instance["model_patch"] = swe_agent.repo_info["submission"]
 
     print(f"Preparing to save predictions to {output_file}")
 

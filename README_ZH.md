@@ -1,21 +1,21 @@
+
 # Data Interpreter (DI)
 
-## What is Data Interpreter
-Data Interpreter is an agent who solves data-related problems through codes. It understands user requirements, makes plans, writes codes for execution, and uses tools if necessary.
+## 什么是 Data Interpreter
+Data Interpreter 是一个通过代码解决数据相关问题的代理。它理解用户需求，制定计划，编写执行代码，并在必要时使用工具。
 
-
-## Experiments in the Paper
-### Installation
-> Ensure that Python 3.9+ is installed on your system. You can check this by using: `python --version`.
-> Recommend using a conda environment: `conda create -n di python=3.9 && conda activate di`
-> We use metagpt, a third-party package, as a dependency to develop Data Interpreter. Install metagpt and configure openai api key under config/config2.yaml
+## 论文中的实验
+### 安装
+> 确保您的系统上已安装 Python 3.9+。您可以使用以下命令检查：`python --version`。
+> 推荐使用 conda 环境：`conda create -n di python=3.9 && conda activate di`
+> 我们使用 metagpt 作为开发 Data Interpreter 的依赖项。安装 metagpt 并在 `config/config2.yaml` 中配置 openai api key
 ```bash
 pip install metagpt==0.8.1
-# pip install metagpt[rag]==0.8.1  # if you want to use experience
+# pip install metagpt[rag]==0.8.1  # 如果你想使用 experience
 export PYTHONPATH="/absolute/path/to/this/repo:$PYTHONPATH"
 ```
 
-### Data Interpreter Dataset Structure
+### Data Interpreter 数据集结构
 
 di_dataset
 
@@ -33,20 +33,20 @@ di_dataset
     - 16_image_2_code_generation
     - 17_image_2_code_generation
 - MATH
-    - kept as original downloaded structure
+    - 保持原始下载结构
 
-### ML-Benchmark Dataset and Requirements
+### ML-Benchmark 数据集和需求
 
-Before running the experiments, you can download the datasets (links in table below), and place them in the specified path (`di_dataset`). We have downloaded the `04_titanic` data set in `di_dataset` for demonstration.
+在运行实验之前，您可以下载数据集（表格中的链接），并将它们放置在指定路径 (`di_dataset`)。我们已经在 `di_dataset` 中下载了 `04_titanic` 数据集以供演示。
 
-You need to run `split.py` to split the data set into training and testing sets
+您需要运行 `split.py` 将数据集拆分为训练集和测试集
 ```bash
 cd di_dataset/ml_benchmark
 python split.py
 cd ../..
 ```
 
-ML-Benchmark contains 8 typical machine learning datasets.
+ML-Benchmark 包含 8 个典型的机器学习数据集。
 
 | ID | Task Name             | Dataset Name     | Link                                           | User Requirement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 |----|-----------------------|------------------|------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -59,26 +59,26 @@ ML-Benchmark contains 8 typical machine learning datasets.
 | 07 | 07_icr_identify       | ICR - Identifying | [link](https://www.kaggle.com/competitions/icr-identify-age-related-conditions/data)                                       | This is a medical dataset with over fifty anonymized health characteristics linked to three age-related conditions. Your goal is to predict whether a subject has or has not been diagnosed with one of these conditions. The target column is Class. Perform data analysis, data preprocessing, feature engineering, and modeling to predict the target. Report F1 Score on the eval data. Train data path: '{data_dir}/ml_benchmark/07_icr-identify-age-related-conditions/split_train.csv', eval data path: '{data_dir}/ml_benchmark/07_icr-identify-age-related-conditions/split_eval.csv' . |
 | 08 | 08_santander_value    | Santander Value  | [link](https://www.kaggle.com/competitions/santander-value-prediction-challenge/data)                                       | This is a customers financial dataset. Your goal is to predict the value of transactions for each potential customer. The target column is target. Perform data analysis, data preprocessing, feature engineering, and modeling to predict the target. Report RMSLE on the eval data. Train data path: '{data_dir}/ml_benchmark/08_santander-value-prediction-challenge/split_train.csv', eval data path: '{data_dir}/ml_benchmark/08_santander-value-prediction-challenge/split_eval.csv' .                                                                                                     |
 
-**Note**:
-1. `data_dir` is the directory where the di_dataset is stored.
+**注意**:
+1. `data_dir` 是存储 `di_dataset` 的目录。
 
-
-To reproduce the results in the paper, run the following commands:
+要重现论文中的结果，请运行以下命令：
 
 ```bash
 python examples/run_ml_benchmark.py --task_name 04_titanic
 ```
 
-Some key arguments:
+一些关键参数：
 
-- `--task_name`: required, specifies the task to run. e.g., 04_titanic and 14_image_background_removal. Refer to the table below for available task names.
-- `--data_dir`: optional, the directory that stores the `di_dataset` (default to `.`, the current working directory).
-- `--use_reflection`: optional, the flag to use reflection or not (default is True).
-- `--use_experience`: optional, the flag to use experience or not (default is False).
+- `--task_name`: 必需，指定要运行的任务。例如，04_titanic 和 14_image_background_removal。有关可用任务名称，请参阅下表。
+- `--data_dir`: 可选，存储 `di_dataset` 的目录（默认为 `.`，当前工作目录）。
+- `--use_reflection`: 可选，是否使用反射的标志（默认为 True）。
+- `--use_experience`: 可选，是否使用经验的标志（默认为 False）。
 
-### Open-Ended Tasks Dataset and Requirements
+### Open-Ended Tasks 数据集和需求
 
-Open-Ended Tasks have collected and designed 20 moderately challenging open-ended tasks, requiring Data Interpreters to understand user requirements, plan and decompose tasks, and generate and execute code.
+Open-Ended Tasks 收集并设计了 20 个中等难度的开放式任务，要求 Data Interpreters 理解用户需求，计划和分解任务，并生成和执行代码。
+
 
 | ID | Task Name                   | Scenario                           | Scenario Description                                                                                                                                    | User Requirement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 |----|-----------------------------|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -103,66 +103,66 @@ Open-Ended Tasks have collected and designed 20 moderately challenging open-ende
 | 19 | 19_generate_games           | Generate games using existing repo | Game tool usage (pyxel)                                                                                                                                 | You are a professional game developer, please use pyxel software to create a simple jumping game. The game needs to include a character that can move left and right on the screen. When the player presses the spacebar, the character should jump. Please ensure that the game is easy to operate, with clear graphics, and complies with the functional limitations of pyxel software. Note: pyxel environment already satisfied                                                                                                                                                                                                                                                                                                                                                                       |
 | 20 | 20_generate_games           | Generate games using existing repo | Game tool usage (pyxel)                                                                                                                                 | Make a mouse click game that click button as many times as possible in 30 seconds using pyxel. Note: pyxel environment already satisfied                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
-**Note**:
-1. `data_dir` is the directory where the di_dataset is stored.
-2. The specific email account and password need to be replaced with the actual email account and password in `requirements_prompt.py`.
-3. The specific sd_url need to be replaced with the actual sd_url in `requirements_prompt.py`.
-4. Codes related to "Generate games using existing repo" and Math benchmark are being integrated. Stay tuned.
+**注意**：
+1. `data_dir` 是存储 `di_dataset` 的目录。
+2. 需要在 `requirements_prompt.py` 中将具体的电子邮件账号和密码替换为实际的电子邮件账号和密码。
+3. 需要在 `requirements_prompt.py` 中将具体的 `sd_url` 替换为实际的 `sd_url`。
+4. 与“使用现有仓库生成游戏”和数学基准相关的代码正在集成中，敬请期待。
 
 
-To reproduce the results in the paper, run the following commands:
+要重现论文中的结果，请运行以下命令：
 
 ```bash
 python examples/run_open_ended_tasks.py --task_name 14_image_background_removal
 ```
 
-### Math Dataset and Requirements
+### 数学数据集和要求
 
-- Download the [**MATH dataset here**](https://people.eecs.berkeley.edu/~hendrycks/MATH.tar)
+- 下载 [**数学数据集**](https://people.eecs.berkeley.edu/~hendrycks/MATH.tar)
 
 
-- Extract the tar file to `di_dataset/MATH`
+- 将 tar 文件解压到 `di_dataset/MATH`
 
-- Use `--categories` to select category to run, The problems are randomly selected from level-5 difficulty. Here are the category names and IDs. For exmaple, you can test on level-5 problem from Number Theory (`--categories 4`):
+- 使用 `--categories` 选择要运行的类别，问题是从难度等级为 5 的问题中随机选择的。以下是类别名称和 ID。例如，您可以在数论（`--categories 4`）中测试难度等级为 5 的问题：
 
-| ID | Category Name            |
+| ID | 类别名称                  |
 |----|--------------------------|
-| 0  | Algebra                  |
-| 1  | Counting & Probability   |
-| 2  | Geometry                 |
-| 3  | Intermediate Algebra     |
-| 4  | Number Theory            |
-| 5  | Prealgebra               |
-| 6  | Precalculus              |
+| 0  | 代数                     |
+| 1  | 计数与概率               |
+| 2  | 几何                     |
+| 3  | 中级代数                 |
+| 4  | 数论                     |
+| 5  | 初级代数                 |
+| 6  | 预备微积分               |
 
 
-To reproduce the results in the paper, run the following commands:
+要重现论文中的结果，请运行以下命令：
 
 ```bash
 python examples/run_math_benchmark.py --categories 4 --level 5 --vote_num 3 --folder ./math_experiment --dataset_path ./di_dataset/MATH
 ```
-You can find the experiment records in folder `./math_experiment`.
+您可以在文件夹 `./math_experiment` 中找到实验记录。
 
 
-### SWE-bench Dataset and Requirements
+### SWE-bench 数据集和要求
 
-SWE-bench is a dataset that tests systems’ ability to solve GitHub issues automatically. The dataset collects 2,294 Issue-Pull Request pairs from 12 popular Python. 
+SWE-bench 是一个测试系统自动解决 GitHub 问题能力的数据集。该数据集收集了来自 12 个流行 Python 项目的 2,294 个 Issue-Pull Request 对。
 
-The dataset is available at the following link:[SWE-bench](https://huggingface.co/datasets/princeton-nlp/SWE-bench)
+该数据集可在以下链接获取：[SWE-bench](https://huggingface.co/datasets/princeton-nlp/SWE-bench)
 
-- To run the SWE-bench dataset, you can execute the following command:
+- 要运行 SWE-bench 数据集，您可以执行以下命令：
 
 ```bash
 python examples/run_swe_agent_for_benchmark.py
 ```
 
-This script is used to execute the SWE-bench Dataset. It loads the dataset, processes each instance, and saves the results.
+此脚本用于执行 SWE-bench 数据集。它加载数据集，处理每个实例，并保存结果。
 
 
-- To fix real-world open issues, you can execute the following command:
+- 要修复实际的开放问题，您可以执行以下命令：
 
 ```bash
 python examples/run_swe_agent_open_source_issue.py
 ```
 
-This script is used to fix real-world open issues. It takes predefined issues, processes them, and attempts to generate fixes for the specified repositories.
+此脚本用于修复实际的开放问题。它接受预定义的问题，处理它们，并尝试为指定的存储库生成修复。
