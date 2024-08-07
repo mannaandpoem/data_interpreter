@@ -5,7 +5,7 @@ from metagpt.logs import logger
 from di_project.roles.swe_agent import SWEAgent
 
 FIX_ISSUE1 = """
-Write a fix for this issue: https://github.com/langchain-ai/langchain/issues/20453, 
+Write a fix for this issue: https://github.com/langchain-ai/langchain/issues/20453,
 you can fix it on this repo https://github.com/garylin2099/langchain
 """
 # + "checkout a branch named test-fix, commit your changes, push,
@@ -26,22 +26,19 @@ You can fix it on this repo https://github.com/garylin2099/MetaGPT
 # and create a PR to https://github.com/garylin2099/MetaGPT
 # """
 FIX_ISSUE_SIMPLE = """
-Write a fix for this issue: https://github.com/mannaandpoem/simple_calculator/issues/1, 
+Write a fix for this issue: https://github.com/mannaandpoem/simple_calculator/issues/1,
 you can fix it on this repo https://github.com/garylin2099/simple_calculator
 """
 # checkout a branch named test, commit your changes, push, and create a PR to the master branch of original repo.
 # """
 
 
-NO_ENV_TIP = """
-Because the environment is not available, you DO NOT need to run and modify any existing test case files or
-add new test case files to ensure that the bug is fixed.  
-You need to use git tools to clone the repository, checkout a branch, commit your changes.
-"""
+NO_ENV_TIP = """Because the environment is not available, you DO NOT need to run and modify any existing test case
+files or add new test case files to ensure that the bug is fixed. You need to use git tools to clone the repository
+and commit the changes."""
+
 if __name__ == "__main__":
-    swe_agent = SWEAgent(
-        react_mode="plan_and_act",
-    )
+    swe_agent = SWEAgent()
     swe_agent.cur_instance_id = "test_01"
     logger.info("**** Starting run ****")
     user_requirement_and_issue = FIX_ISSUE1 + NO_ENV_TIP

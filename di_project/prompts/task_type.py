@@ -21,7 +21,7 @@ The current task is about data preprocessing, please note the following:
 # Prompt for taking on "feature_engineering" tasks
 FEATURE_ENGINEERING_PROMPT = """
 The current task is about feature engineering. when performing it, please adhere to the following principles:
-- Generate as diverse features as possible to improve the model's performance step-by-step. 
+- Generate as diverse features as possible to improve the model's performance step-by-step.
 - Use available feature engineering tools if they are potential impactful.
 - Avoid creating redundant or excessively numerous features in one step.
 - Exclude ID columns from feature generation and remove them.
@@ -52,4 +52,31 @@ IMAGE2WEBPAGE_PROMPT = """
 The current task is about converting image into webpage code. please note the following:
 - Single-Step Code Generation: Execute the entire code generation process in a single step, encompassing HTML, CSS, and JavaScript. Avoid fragmenting the code generation into multiple separate steps to maintain consistency and simplify the development workflow.
 - Save webpages: Be sure to use the save method provided.
+"""
+
+REPRODUCE_PROMPT = """
+The current task is about reproducing the reported issue. Please follow these steps:
+- If no reproduction code is provided, skip this step and proceed directly to fixing the bug.
+- If reproduction code is provided, follow these steps:
+    1. **Add New Test Cases:** Create new test cases in a separate file to reproduce the issue if needed.
+    2. **Modify Existing Code:** Adjust the existing code as necessary to replicate the issue.
+    3. **Run Targeted Tests:** Execute only the specific test cases related to the issue. Avoid running all test suites directly with `pytest` or similar commands.
+"""
+
+LOCATE_PROMPT = """
+The current task is about locating the root cause of the issue. Please follow these steps:
+- Analyze the code and logs to identify the source of the problem.
+- Use debugging tools and techniques to trace the issue to its origin.
+"""
+
+FIX_PROMPT = """
+The current task is about fixing the identified issue. Please follow these steps:
+- Apply the necessary code changes to resolve the issue.
+- Ensure that the changes address the root cause and follow coding standards and best practices.
+"""
+
+VERIFY_PROMPT = """
+The current task is about verifying that the issue has been resolved. Please follow these steps:
+- Run the specific test cases related to the issue to confirm the fix.
+- After verifying the fix, run the entire test suite to ensure that the modifications have not introduced new issues. This comprehensive testing step is crucial to confirm the stability and reliability of the fix across the application.
 """

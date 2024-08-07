@@ -1,6 +1,7 @@
 import os
 import json
 
+
 def remove_boxed(s):
     left = "\\boxed{"
     try:
@@ -94,6 +95,7 @@ def _fix_fracs(string):
                         new_str += "{" + a + "}" + b
     string = new_str
     return string
+
 
 def _fix_a_slash_b(string):
     if len(string.split("/")) != 2:
@@ -242,4 +244,3 @@ def get_math_problem(rootdir):
             problems[subtopic][prob_level][file] = (problem, answer, prob_level)
 
     return problems
-

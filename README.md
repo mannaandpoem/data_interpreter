@@ -6,8 +6,8 @@ Data Interpreter is an agent who solves data-related problems through codes. It 
 
 ## Experiments in the Paper
 ### Installation
-> Ensure that Python 3.9+ is installed on your system. You can check this by using: `python --version`.  
-> Recommend using a conda environment: `conda create -n di python=3.9 && conda activate di`  
+> Ensure that Python 3.9+ is installed on your system. You can check this by using: `python --version`.
+> Recommend using a conda environment: `conda create -n di python=3.9 && conda activate di`
 > We use metagpt, a third-party package, as a dependency to develop Data Interpreter. Install metagpt and configure openai api key under config/config2.yaml
 ```bash
 pip install metagpt==0.8.1
@@ -142,4 +142,3 @@ To reproduce the results in the paper, run the following commands:
 python examples/run_math_benchmark.py --categories 4 --level 5 --vote_num 3 --folder ./math_experiment --dataset_path ./di_dataset/MATH
 ```
 You can find the experiment records in folder `./math_experiment`.
-

@@ -141,4 +141,3 @@ class DataInterpreterMath(Role):
             counter += 1
 
         return code["code"], result, success
-

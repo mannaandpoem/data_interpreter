@@ -17,7 +17,7 @@ __context__
     "summary": str = "Make a summary according to the Current Plan, Current Code and Code Runtime Result",
     "status": bool = "Determine whether the the Current Plan is completed correctly",
     "suggestion": str = "If the Current Plan is not completed correctly, provides modification methods and suggestions.Otherwise, an empty string is returned"
-    
+
 }
 ```
 -----
@@ -46,7 +46,7 @@ class CodeReflection(Action):
 
     async def run(self, plan: Plan, code='', code_result='',) -> Tuple[str, str, str]:
         context = self.get_context(plan, code, code_result)
-        
+
         cr_prompt = CODE_REFLECTION_PROMPT_TEMPLATE.replace('__context__', context, )
         cr = await self._aask(cr_prompt)
         cr = CodeParser.parse_code(block=None, text=cr)
@@ -55,7 +55,7 @@ class CodeReflection(Action):
         except:
             cr = cr.replace('\\', '\\\\')
             cr = json.loads(cr)
-        
+
         summary = ''
         status = False
         suggestion = ''
@@ -63,19 +63,18 @@ class CodeReflection(Action):
             summary = cr['summary']
             status = cr['status']
             suggestion = cr['suggestion']
-        
+
         return summary, status, suggestion
-    
+
     def get_context(self, plan: Plan, code: str = "", runtime_result: str = ""):
         user_requirement = plan.goal
 
         def process_task(task):
             ptask = f"{task.task_id}:{task.instruction}"
             return ptask
-        
+
         tasks = json.dumps([process_task(task) for task in plan.tasks], indent=4, ensure_ascii=False)
         context = MATH_REVIEW_CONTEXT.format(
             user_requirement=user_requirement, tasks=tasks, code=code, result=runtime_result
         )
         return context
-

@@ -4,6 +4,7 @@ from datetime import datetime
 
 from metagpt.const import DEFAULT_WORKSPACE_ROOT, METAGPT_ROOT
 
+from di_project.prompts.swe_agent import INSTANCE_TEMPLATE
 from di_project.roles.swe_agent import SWEAgent
 from di_project.tools.libs.terminal import Terminal
 from di_project.tools.swe_agent_commands.swe_agent_utils import load_hf_dataset
@@ -11,28 +12,6 @@ from di_project.tools.swe_agent_commands.swe_agent_utils import load_hf_dataset
 # Specify by yourself
 TEST_REPO_DIR = METAGPT_ROOT.parent / "data" / "test_repo"
 DATA_DIR = METAGPT_ROOT.parent / "data/hugging_face"
-
-INSTANCE_TEMPLATE = """
-## User Requirement
-Fix the bug in the repo. Because the environment is not available, you DO NOT need to run and modify any existing test case files or add new test case files to ensure that the bug is fixed.
-
-We're currently solving the following issue within our repository. You can use any bash commands or the special interface to help you. Here's the issue and hints text:
-## ISSUE
-{issue}
-
-## HINTS
-hints text is the comment under issue:
-{hints_text}
-
-The repository may already exist at the path `{repo_path}`. If it doesn't, please download the repository to this path.
-Your first action must be to navigate to the repository path `{repo_path}`.
-This issue occurred in version {version}, with the corresponding base commit being {base_commit}. You need to switch to the code version associated with this commit.
-All subsequent actions must be performed within this repository path. Do not leave this directory to execute any actions at any time.
-
-## INSTRUCTIONS:
-Now, you're going to solve this issue on your own from the perspective of a programmer. Your terminal session has started and you're in the repository's root directory. You can use any bash commands or the special interface to help you. Edit all the files you need. 
-Remember, YOU CAN ONLY ENTER ONE COMMAND AT A TIME. You should always wait for feedback after every command.
-"""
 
 
 def check_instance_status(instance, swe_result_dir):

@@ -165,12 +165,12 @@ class SWEEnv:
     def _post_observation(action, observation):
         edit_error_rst = observation.split(EDIT_DIVIDER)[0].strip()
         if action.startswith("edit") and edit_error_rst:
-            observation = f"""{edit_error_rst}\nIMPORTANT: {EDIT_CONSECUTIVE_LIMIT} consecutive `edit` actions 
-            are **not allowed**. Based on the recent error information, modify your actions accordingly instead 
+            observation = f"""{edit_error_rst}\nIMPORTANT: {EDIT_CONSECUTIVE_LIMIT} consecutive `edit` actions
+            are **not allowed**. Based on the recent error information, modify your actions accordingly instead
             of repeating the previous command. For instance, use goto to jump to the specified line."""
         else:
             consecutive_action = action.split(" ")[0]
-            observation = f"""{observation}\nIMPORTANT: {CONSECUTIVE_LIMIT} consecutive `{consecutive_action}` bash 
+            observation = f"""{observation}\nIMPORTANT: {CONSECUTIVE_LIMIT} consecutive `{consecutive_action}` bash
             command are **not allowed**. Please use other bash commands to fix the bug."""
 
         return observation

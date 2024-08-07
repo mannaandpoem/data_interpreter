@@ -32,7 +32,7 @@ TOOL_RECOMMENDATION_PROMPT = """
 {current_task}
 
 ## Task
-Recommend up to {topk} tools from 'Available Tools' that can help solve the 'User Requirement'. 
+Recommend up to {topk} tools from 'Available Tools' that can help solve the 'User Requirement'.
 
 ## Available Tools:
 {available_tools}

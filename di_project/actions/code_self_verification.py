@@ -28,7 +28,7 @@ CSV_CONTEXT = """
 
 
 class CodeSelfVerification(Action):
-    
+
     async def run(self, plan: Plan, answer='', execute_code=None) -> Tuple[str, str, str]:
         context = self.get_context(plan, answer, )
         prompt = CSV_PROMPT_TEMPLATE.replace('__context__', context, )
@@ -36,10 +36,8 @@ class CodeSelfVerification(Action):
         code = CodeParser().parse_code(block="", text=llm_res)
         result, success = await execute_code.run(code)
         return code, result, success
-    
+
     def get_context(self, plan: Plan, answer: str = "",):
         user_requirement = plan.goal
         context = CSV_CONTEXT.format(user_requirement=user_requirement, answer=answer)
         return context
-
-

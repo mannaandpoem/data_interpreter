@@ -8,7 +8,7 @@ from di_project.prompts.task_type import (
     FEATURE_ENGINEERING_PROMPT,
     IMAGE2WEBPAGE_PROMPT,
     MODEL_EVALUATE_PROMPT,
-    MODEL_TRAIN_PROMPT,
+    MODEL_TRAIN_PROMPT, REPRODUCE_PROMPT, LOCATE_PROMPT, FIX_PROMPT, VERIFY_PROMPT,
 )
 
 
@@ -66,6 +66,29 @@ class TaskType(Enum):
     EMAIL_LOGIN = TaskTypeDef(
         name="email login",
         desc="For logging to an email.",
+    )
+    REPRODUCE = TaskTypeDef(
+        name="reproduce",
+        desc="For reproducing the reported issue.",
+        guidance=REPRODUCE_PROMPT
+    )
+
+    LOCATE = TaskTypeDef(
+        name="locate",
+        desc="For locating the root cause of the issue.",
+        guidance=LOCATE_PROMPT
+    )
+
+    FIX = TaskTypeDef(
+        name="fix",
+        desc="For fixing the identified issue.",
+        guidance=FIX_PROMPT
+    )
+
+    VERIFY = TaskTypeDef(
+        name="verify",
+        desc="For verifying that the issue has been resolved.",
+        guidance=VERIFY_PROMPT
     )
 
     @property

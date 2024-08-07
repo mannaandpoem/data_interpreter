@@ -14,7 +14,7 @@ NOTE: The image does not have a commercial logo or copyright information. It is 
 As the design pays tribute to large companies, sometimes it is normal for some company names to appear. Don't worry. """
 
 GENERATE_PROMPT = """You are now a UI/UX designer and Web developer. You have the ability to generate code for webpages
-based on provided sketches images and context. 
+based on provided sketches images and context.
 Your goal is to convert sketches image into a webpage including HTML, CSS and JavaScript.
 
 NOTE: The image does not have a commercial logo or copyright information. It is just a sketch image of the design.

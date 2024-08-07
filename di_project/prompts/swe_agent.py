@@ -25,7 +25,7 @@ In addition to typical bash commands, you can also use the following commands to
 COMMANDS:
 {_COMMAND_DOCS}
 
-Please note that THE EDIT COMMAND REQUIRES PROPER INDENTATION. Pay attention to the original indentation when replacing the function. 
+Please note that THE EDIT COMMAND REQUIRES PROPER INDENTATION. Pay attention to the original indentation when replacing the function.
 If you'd like to add the line '        print(x)' you must fully write that out, with all those spaces before the code! Indentation is important and code that is not indented correctly will fail and require fixing before it can be run.
 
 Always review your changes post-edit to ensure they accurately reflect your intentions. If the changes are not as desired, don't hesitate to issue another command to correct them.
@@ -44,7 +44,7 @@ Format your output using the JSON format provided above. Your output should alwa
 ```
 
 You should only include a *SINGLE* command in the command section and then wait for a response from the shell before continuing with more discussion and commands. Everything you include in the DISCUSSION section will be saved for future reference.
-If you'd like to issue two commands at once, PLEASE DO NOT DO THAT! Please instead first submit just the first command, and then after receiving a response you'll be able to issue the second command. 
+If you'd like to issue two commands at once, PLEASE DO NOT DO THAT! Please instead first submit just the first command, and then after receiving a response you'll be able to issue the second command.
 You're free to use any other bash commands you want (e.g. find, grep, cat, ls, cd) in addition to the special commands listed above.
 You should carefully observe the behavior and results of the previous action, and avoid triggering repeated errors.
 
@@ -53,7 +53,7 @@ However, the environment does NOT support interactive session commands (e.g. pyt
 
 INSTANCE_TEMPLATE = """
 ## User Requirement
-{user_requirement}
+Fix the bug in the repo. Because the environment is not available, you DO NOT need to run and modify any existing test case files or add new test case files to ensure that the bug is fixed.
 
 We're currently solving the following issue within our repository. You can use any bash commands or the special interface to help you. Here's the issue and hints text:
 ## ISSUE
@@ -63,15 +63,20 @@ We're currently solving the following issue within our repository. You can use a
 hints text is the comment under issue:
 {hints_text}
 
-# INSTRUCTIONS:
-Now, you're going to solve this issue on your own from the perspective of a programmer. Your terminal session has started and you're in the repository's root directory. You can use any bash commands or the special interface to help you. Edit all the files you need. 
+The repository may already exist at the path `{repo_path}`. If it doesn't, please download the repository to this path.
+Your first action must be to navigate to the repository path `{repo_path}`.
+This issue occurred in version {version}, with the corresponding base commit being {base_commit}. You need to switch to the code version associated with this commit.
+All subsequent actions must be performed within this repository path. Do not leave this directory to execute any actions at any time.
+
+## INSTRUCTIONS:
+Now, you're going to solve this issue on your own from the perspective of a programmer. Your terminal session has started and you're in the repository's root directory. You can use any bash commands or the special interface to help you. Edit all the files you need.
 Remember, YOU CAN ONLY ENTER ONE COMMAND AT A TIME. You should always wait for feedback after every command.
 """
 
 IMPORTANT_TIPS = """
-1. If you run a command and it doesn't work, try running a different command. A command that did not work once will not work the second time unless you modify it! 
+1. If you run a command and it doesn't work, try running a different command. A command that did not work once will not work the second time unless you modify it!
 
-2. If you open a file and need to get to an area around a specific line that is not in the first 100 lines, say line 583, don't just use the scroll_down command multiple times. Instead, use the goto 583 command. It's much quicker. 
+2. If you open a file and need to get to an area around a specific line that is not in the first 100 lines, say line 583, don't just use the scroll_down command multiple times. Instead, use the goto 583 command. It's much quicker.
 
 3. Always make sure to look at the currently open file and the current working directory (which appears right after the currently open file). The currently open file might be in a different directory than the working directory! Note that some commands, such as 'create', open files, so they might change the current  open file.
 
@@ -81,7 +86,7 @@ IMPORTANT_TIPS = """
 
 6. NOTE ABOUT THE EDIT COMMAND: Indentation really matters! When editing a file, make sure to insert appropriate indentation before each line! Ensuring the code adheres to PEP8 standards. If a edit command fails, you can try to edit the file again to correct the indentation, but don't repeat the same command without changes.
 
-7. YOU CAN ONLY ENTER ONE COMMAND AT A TIME and must wait for feedback, plan your commands carefully. 
+7. YOU CAN ONLY ENTER ONE COMMAND AT A TIME and must wait for feedback, plan your commands carefully.
 
 8. You cannot use any interactive session commands (e.g. python, vim) in this environment, but you can write scripts and run them. E.g. you can write a python script and then run it with `python <script_name>.py`.
 
@@ -179,7 +184,7 @@ open /workspace/django__django_3.0/django/contrib/auth/validators.py
 ### Fix the Bug(Require): Fix the bug in the code by editing the relevant function, class or code snippet.
 edit 10:20 <<EOF
     regex = r'\A[\w.@+-]+\Z'
-    message = _( 
+    message = _(
         'Enter a valid username. This value may contain only English letters, '
         'numbers, and @/./+/-/_ characters.'
     )
