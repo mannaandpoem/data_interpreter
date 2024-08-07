@@ -1,8 +1,8 @@
-from metagpt.schema import Message, SystemMessage
 from metagpt.actions import Action
+from metagpt.schema import Message
 from metagpt.utils.common import CodeParser
-from di_project.schema import Plan
 
+from di_project.schema import Plan
 
 DEFAULT_SYSTEM_MSG = """As a professional mathematics assistant, you are good at solving mathematical problems with various methods.
 Please help me solve the problem using Python code, and Output in Python Block
@@ -22,12 +22,11 @@ class MathWriteCode(Action):
     """Ask LLM to generate codes to solve math problem"""
 
     async def run(
-            self,
-            context: list[Message],
-            plan: Plan = None,
-            **kwargs,
+        self,
+        context: list[Message],
+        plan: Plan = None,
+        **kwargs,
     ) -> str:
-
         def message_to_str(message: Message) -> str:
             return f"{message.role}: {message.content}"
 

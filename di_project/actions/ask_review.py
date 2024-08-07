@@ -28,7 +28,10 @@ class ReviewConst:
 
 class AskReview(Action):
     async def run(
-        self, context: list[Message] = [], plan: Plan = None, trigger: str = ReviewConst.TASK_REVIEW_TRIGGER
+        self,
+        context: list[Message] = [],
+        plan: Plan = None,
+        trigger: str = ReviewConst.TASK_REVIEW_TRIGGER,
     ) -> Tuple[str, bool]:
         if plan:
             logger.info("Current overall plan:")

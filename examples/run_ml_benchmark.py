@@ -1,8 +1,10 @@
 import os
+
 import fire
 
-from examples.requirements_prompt import ML_BENCHMARK_REQUIREMENTS
 from di_project.roles.data_interpreter import DataInterpreter
+from examples.requirements_prompt import ML_BENCHMARK_REQUIREMENTS
+
 
 # Ensure ML-Benchmark dataset has been downloaded before using these example.
 async def main(task_name="04_titanic", data_dir=".", use_reflection=True, use_experience=False):

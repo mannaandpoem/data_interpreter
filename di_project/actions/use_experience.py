@@ -1,17 +1,16 @@
 import json
 
 import chromadb
-from pydantic import BaseModel
-
 from metagpt.actions import Action
 from metagpt.const import SERDESER_PATH
 from metagpt.logs import logger
 from metagpt.rag.engines import SimpleEngine
 from metagpt.rag.schema import ChromaRetrieverConfig
+from pydantic import BaseModel
 
+from di_project.prompts.get_task_summary import TASK_CODE_DESCRIPTION_PROMPT
 from di_project.schema import Task
 from di_project.strategy.planner import Planner
-from di_project.prompts.get_task_summary import TASK_CODE_DESCRIPTION_PROMPT
 
 
 class Trajectory(BaseModel):
@@ -52,7 +51,11 @@ class AddNewTrajectories(Action):
         )
         return engine
 
-    async def run(self, planner: Planner, trajectory_collection_name: str = TRAJECTORY_COLLECTION_NAME):
+    async def run(
+        self,
+        planner: Planner,
+        trajectory_collection_name: str = TRAJECTORY_COLLECTION_NAME,
+    ):
         """Initiate a collection and add new trajectories to the collection."""
 
         engine = self._init_engine(trajectory_collection_name)
@@ -63,7 +66,12 @@ class AddNewTrajectories(Action):
         user_requirement = planner.plan.goal
         task_map = planner.plan.task_map
         trajectories = [
-            Trajectory(user_requirement=user_requirement, task_map=task_map, task=task, is_used=False)
+            Trajectory(
+                user_requirement=user_requirement,
+                task_map=task_map,
+                task=task,
+                is_used=False,
+            )
             for task in planner.plan.tasks
         ]
 
@@ -96,7 +104,7 @@ class AddNewExperiences(Action):
         unused_ids = [
             id
             for id in collection.get()["ids"]  # collection.get()["ids"] will get all the ids in the collection
-            if json.loads(collection.get([id])["metadatas"][0]["obj_json"])["is_used"] == False
+            if json.loads(collection.get([id])["metadatas"][0]["obj_json"])["is_used"] is False
             # Check if the is_used attribute of the trajectory corresponding to the given id is false.
         ]
 
@@ -130,16 +138,18 @@ class AddNewExperiences(Action):
         """
         task = trajectory.task
         prompt = TASK_CODE_DESCRIPTION_PROMPT.format(
-            code_snippet=task.code, code_result=task.result, code_success="Success" if task.is_success else "Failure"
+            code_snippet=task.code,
+            code_result=task.result,
+            code_success="Success" if task.is_success else "Failure",
         )
         resp = await self._aask(prompt=prompt)
         return resp
 
     async def run(
-            self,
-            trajectory_collection_name: str = TRAJECTORY_COLLECTION_NAME,
-            experience_collection_name: str = EXPERIENCE_COLLECTION_NAME,
-            mode: str = "single_task_summary",
+        self,
+        trajectory_collection_name: str = TRAJECTORY_COLLECTION_NAME,
+        experience_collection_name: str = EXPERIENCE_COLLECTION_NAME,
+        mode: str = "single_task_summary",
     ):
         """Initiate a collection and Add a new task experience to the collection.
 
@@ -174,14 +184,19 @@ class RetrieveExperiences(Action):
         engine = SimpleEngine.from_objs(
             retriever_configs=[
                 ChromaRetrieverConfig(
-                    persist_path=PERSIST_PATH, collection_name=collection_name, similarity_top_k=top_k
+                    persist_path=PERSIST_PATH,
+                    collection_name=collection_name,
+                    similarity_top_k=top_k,
                 )
             ],
         )
         return engine
 
     async def run(
-            self, query: str, experience_collection_name: str = EXPERIENCE_COLLECTION_NAME, top_k: int = 5
+        self,
+        query: str,
+        experience_collection_name: str = EXPERIENCE_COLLECTION_NAME,
+        top_k: int = 5,
     ) -> str:
         """Retrieve past attempted tasks
 

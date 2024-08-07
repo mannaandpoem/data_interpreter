@@ -1,18 +1,17 @@
-
 import json
 from typing import List
+
 from metagpt.logs import logger
 from metagpt.schema import Message
 
+from di_project.actions.ask_review import ReviewConst
 from di_project.actions.write_plan import (
     WritePlan,
     precheck_update_plan_from_rsp,
     update_plan_from_rsp,
 )
+from di_project.schema import Plan
 from di_project.strategy.planner import Planner
-from di_project.schema import Plan, Task
-from di_project.actions.ask_review import AskReview, ReviewConst
-
 
 MATH_STRUCTURAL_CONTEXT = """
 ## User Requirement
@@ -24,7 +23,6 @@ MATH_STRUCTURAL_CONTEXT = """
 
 
 class MathPlanner(Planner):
-
     async def update_plan(self, goal: str = "", max_tasks: int = 3, max_retries: int = 3):
         if goal:
             self.plan = Plan(goal=goal)
@@ -56,9 +54,7 @@ class MathPlanner(Planner):
         tasks = [f"{task.task_id}:{task.instruction}" for task in self.plan.tasks]
         tasks = json.dumps(tasks, indent=4, ensure_ascii=False)
 
-        context = MATH_STRUCTURAL_CONTEXT.format(
-            user_requirement=user_requirement, tasks=tasks
-        )
+        context = MATH_STRUCTURAL_CONTEXT.format(user_requirement=user_requirement, tasks=tasks)
         context_msg = [Message(content=context, role="user")]
 
         return context_msg + self.working_memory.get(num)

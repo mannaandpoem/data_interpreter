@@ -9,10 +9,10 @@ from os.path import join
 
 import requests
 from aiohttp import ClientSession
-from PIL import Image, PngImagePlugin
-
 from metagpt.const import SD_OUTPUT_FILE_REPO, SOURCE_ROOT
 from metagpt.logs import logger
+from PIL import Image, PngImagePlugin
+
 from di_project.tools.tool_registry import register_tool
 
 payload = {
@@ -51,7 +51,13 @@ default_negative_prompt = "(easynegative:0.8),black, dark,Low resolution"
 
 @register_tool(
     tags=["text2image", "multimodal"],
-    include_functions=["__init__", "simple_run_t2i", "run_t2i", "construct_payload", "save"],
+    include_functions=[
+        "__init__",
+        "simple_run_t2i",
+        "run_t2i",
+        "construct_payload",
+        "save",
+    ],
 )
 class SDEngine:
     """Generate image using stable diffusion model.

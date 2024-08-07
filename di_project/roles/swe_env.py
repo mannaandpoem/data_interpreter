@@ -1,21 +1,23 @@
-from metagpt.const import METAGPT_ROOT
-from pydantic import Field
-
-from di_project.prompts.swe_agent import NEXT_STEP_NO_OUTPUT_TEMPLATE, INVALID_INPUT_MESSAGE
-from di_project.tools.libs.terminal import Bash
-from di_project.tools.swe_agent_commands.swe_agent_utils import replace_action_for_nt
-
 import os
 import subprocess
 import sys
 from pathlib import Path
 
-from pydantic import BaseModel, model_validator
+from metagpt.const import METAGPT_ROOT
+from metagpt.logs import logger
+from pydantic import Field, model_validator
 from swebench import MAP_VERSION_TO_INSTALL
 from swebench.harness.utils import get_environment_yml, get_requirements
 
-from metagpt.logs import logger
-from di_project.tools.swe_agent_commands.swe_agent_utils import get_conda_base_path
+from di_project.prompts.swe_agent import (
+    INVALID_INPUT_MESSAGE,
+    NEXT_STEP_NO_OUTPUT_TEMPLATE,
+)
+from di_project.tools.libs.terminal import Bash
+from di_project.tools.swe_agent_commands.swe_agent_utils import (
+    get_conda_base_path,
+    replace_action_for_nt,
+)
 
 CONSECUTIVE_LIMIT = 3
 EDIT_CONSECUTIVE_LIMIT = 3
@@ -45,6 +47,7 @@ class SWEEnv:
         python_version (str): The Python version to use in the environment.
         terminal (Bash): The terminal object to execute bash commands.
     """
+
     env_name: str = ""
     repo_path: str = ""  # The code path to be processed
     repo_name: str = ""
@@ -112,7 +115,10 @@ class SWEEnv:
         if pkgs == "environment.yml":
             # fixme: in windows, requests.get(url) return 400, need: reqs_url = reqs_url.replace("\\", "/")
             path_to_reqs = get_environment_yml(
-                self.instance, self.env_name, save_path=self.repo_path, python_version=self.python_version
+                self.instance,
+                self.env_name,
+                save_path=self.repo_path,
+                python_version=self.python_version,
             )
 
             if path_to_reqs is None:

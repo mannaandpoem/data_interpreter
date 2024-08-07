@@ -2,21 +2,20 @@ from __future__ import annotations
 
 import json
 
-from pydantic import BaseModel, Field
 from metagpt.logs import logger
 from metagpt.memory import Memory
 from metagpt.schema import Message
 from metagpt.utils.common import remove_comments
+from pydantic import BaseModel, Field
 
-from di_project.schema import Plan, Task, TaskResult
 from di_project.actions.ask_review import AskReview, ReviewConst
-from di_project.strategy.task_type import TaskType
 from di_project.actions.write_plan import (
     WritePlan,
     precheck_update_plan_from_rsp,
     update_plan_from_rsp,
 )
-
+from di_project.schema import Plan, Task, TaskResult
+from di_project.strategy.task_type import TaskType
 
 STRUCTURAL_CONTEXT = """
 ## User Requirement
@@ -153,7 +152,10 @@ class Planner(BaseModel):
         tasks = json.dumps(tasks, indent=4, ensure_ascii=False)
         current_task = self.plan.current_task.json() if self.plan.current_task else {}
         context = STRUCTURAL_CONTEXT.format(
-            user_requirement=user_requirement, context=context, tasks=tasks, current_task=current_task
+            user_requirement=user_requirement,
+            context=context,
+            tasks=tasks,
+            current_task=current_task,
         )
         context_msg = [Message(content=context, role="user")]
 

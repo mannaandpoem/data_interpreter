@@ -1,33 +1,31 @@
 import json
 from pathlib import Path
-from typing import Literal, Optional, Dict, List, Union
+from typing import Dict, List, Literal, Union
 
 from metagpt.const import DEFAULT_WORKSPACE_ROOT, METAGPT_ROOT
 from metagpt.logs import logger
+from metagpt.schema import AIMessage, Message
+from metagpt.utils.common import CodeParser
 from pydantic import Field
 
-from metagpt.schema import AIMessage, Message
-
 from di_project.actions.write_analysis_code import WriteAnalysisCode
+from di_project.prompts.swe_agent import (
+    IMPORTANT_TIPS,
+    MINIMAL_EXAMPLE,
+    NEXT_STEP_TEMPLATE,
+    REFLECTION_TRAJ_PROMPT,
+    SUMMARY_PROMPT,
+    SWE_AGENT_SYSTEM_TEMPLATE,
+)
 from di_project.roles.data_interpreter import DataInterpreter
 from di_project.roles.swe_env import SWEEnv
 from di_project.schema import Task, TaskResult
 from di_project.tools.libs.terminal import Bash
-
-from di_project.prompts.swe_agent import (
-    INSTANCE_TEMPLATE,
-    NEXT_STEP_TEMPLATE,
-    SUMMARY_PROMPT,
-    SWE_AGENT_SYSTEM_TEMPLATE,
-    REFLECTION_TRAJ_PROMPT, MINIMAL_EXAMPLE, IMPORTANT_TIPS,
-)
 from di_project.tools.swe_agent_commands.swe_agent_utils import (
     extract_patch,
-    parse_thought_and_action, load_hf_dataset, filter_and_get_repo_info,
+    parse_thought_and_action,
 )
-from metagpt.utils.common import CodeParser
-
-from di_project.tools.tool_recommend import BM25ToolRecommender, ToolRecommender
+from di_project.tools.tool_recommend import ToolRecommender
 from di_project.utils.path_utils import converted_path
 
 # Specify by yourself
@@ -55,7 +53,11 @@ class TrajectoryNode:
         self.observation = observation
 
     def to_json(self):
-        return {"thought": self.thought, "action": self.action, "observation": self.observation}
+        return {
+            "thought": self.thought,
+            "action": self.action,
+            "observation": self.observation,
+        }
 
     def __str__(self):
         return f"TrajectoryNode:\n{json.dumps(self.to_json(), indent=2)}"
@@ -95,9 +97,13 @@ class SWEAgent(DataInterpreter):
         self.swe_result_dir = SWE_CMD_WORK_DIR / f"result_{self.config.llm.model}"
         self.swe_result_dir.mkdir(parents=True, exist_ok=True)
         self.swe_env.terminal = Bash()
-        self.set_actions([WriteAnalysisCode])   # Need Fix
+        self.set_actions([WriteAnalysisCode])  # Need Fix
         self._set_state(0)
-        self._set_react_mode(react_mode=self.react_mode, max_react_loop=self.max_react_loop, auto_run=self.auto_run)
+        self._set_react_mode(
+            react_mode=self.react_mode,
+            max_react_loop=self.max_react_loop,
+            auto_run=self.auto_run,
+        )
 
     async def _react(self) -> Message:
         """Entry to one of three strategies by which Role reacts to the observed Message"""

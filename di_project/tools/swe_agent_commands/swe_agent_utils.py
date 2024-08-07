@@ -9,13 +9,9 @@ import numpy as np
 import pandas as pd
 from datasets import load_dataset, load_from_disk
 from github import Github
-
 from metagpt.logs import logger
-from di_project.prompts.swe_agent import (
-    IMPORTANT_TIPS,
-    MINIMAL_EXAMPLE,
-)
 from metagpt.utils.common import CodeParser
+
 from di_project.utils.path_utils import converted_path
 
 OUTPUT_DIR = Path(__file__).parent
@@ -71,7 +67,10 @@ def get_github_issue_description(owner: str, repo_name: str, issue_number: int) 
 
 
 def filter_and_get_repo_info(
-        dataset: pd.DataFrame, filter_column: str, result_dir: str = "", selected_ids: list[str] = None
+    dataset: pd.DataFrame,
+    filter_column: str,
+    result_dir: str = "",
+    selected_ids: list[str] = None,
 ) -> tuple[pd.DataFrame, dict]:
     """Filter the dataset based on selected and finished IDs and get repository information.
 
@@ -162,7 +161,10 @@ def check_existing_ids(output_file):
 
 
 def load_oracle_dataset(
-        dataset_name_or_path: str = "", split: str = "test", existing_ids: list = None, selected_id: str = ""
+    dataset_name_or_path: str = "",
+    split: str = "test",
+    existing_ids: list = None,
+    selected_id: str = "",
 ):
     if Path(dataset_name_or_path).exists():
         dataset = load_from_disk(dataset_name_or_path)

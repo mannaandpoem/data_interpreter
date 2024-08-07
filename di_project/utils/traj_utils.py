@@ -15,7 +15,7 @@ def format_trajs(working_memory, full_trajs: bool = True):
             message = str(message)
             split_idx = message.find(": ")
             role = message[:split_idx]
-            content = message[split_idx + 2:]
+            content = message[split_idx + 2 :]
             content = content.strip("\n")
 
             round_id = i // 2
@@ -23,7 +23,7 @@ def format_trajs(working_memory, full_trajs: bool = True):
             if role == user:
                 if msg_size - i >= 2 and i != 1:
                     user_content = (
-                            f"    <{user}>\n" + "For earlier rounds, Observation is not displayed" + f"\n    </{user}>\n"
+                        f"    <{user}>\n" + "For earlier rounds, Observation is not displayed" + f"\n    </{user}>\n"
                     )
                 else:
                     user_content = f"    <{user}>\n" + content + f"\n    </{user}>\n"

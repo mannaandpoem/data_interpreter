@@ -6,9 +6,13 @@ from di_project.prompts.task_type import (
     DATA_PREPROCESS_PROMPT,
     EDA_PROMPT,
     FEATURE_ENGINEERING_PROMPT,
+    FIX_PROMPT,
     IMAGE2WEBPAGE_PROMPT,
+    LOCATE_PROMPT,
     MODEL_EVALUATE_PROMPT,
-    MODEL_TRAIN_PROMPT, REPRODUCE_PROMPT, LOCATE_PROMPT, FIX_PROMPT, VERIFY_PROMPT,
+    MODEL_TRAIN_PROMPT,
+    REPRODUCE_PROMPT,
+    VERIFY_PROMPT,
 )
 
 
@@ -70,25 +74,21 @@ class TaskType(Enum):
     REPRODUCE = TaskTypeDef(
         name="reproduce",
         desc="For reproducing the reported issue.",
-        guidance=REPRODUCE_PROMPT
+        guidance=REPRODUCE_PROMPT,
     )
 
     LOCATE = TaskTypeDef(
         name="locate",
         desc="For locating the root cause of the issue.",
-        guidance=LOCATE_PROMPT
+        guidance=LOCATE_PROMPT,
     )
 
-    FIX = TaskTypeDef(
-        name="fix",
-        desc="For fixing the identified issue.",
-        guidance=FIX_PROMPT
-    )
+    FIX = TaskTypeDef(name="fix", desc="For fixing the identified issue.", guidance=FIX_PROMPT)
 
     VERIFY = TaskTypeDef(
         name="verify",
         desc="For verifying that the issue has been resolved.",
-        guidance=VERIFY_PROMPT
+        guidance=VERIFY_PROMPT,
     )
 
     @property

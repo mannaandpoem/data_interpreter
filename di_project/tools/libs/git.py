@@ -7,10 +7,10 @@ from typing import Optional, Union
 
 from github.Issue import Issue
 from github.PullRequest import PullRequest
-
 from metagpt.utils.git_repository import GitRepository
-from di_project.tools.tool_registry import register_tool
 from pydantic import BaseModel
+
+from di_project.tools.tool_registry import register_tool
 
 
 class GitBranch(BaseModel):
@@ -19,12 +19,18 @@ class GitBranch(BaseModel):
     repo_name: str
 
 
-@register_tool(tags=["software development", "git", "Commit the changes and push to remote git repository."])
+@register_tool(
+    tags=[
+        "software development",
+        "git",
+        "Commit the changes and push to remote git repository.",
+    ]
+)
 async def git_push(
-        local_path: Union[str, Path],
-        access_token: str,
-        comments: str = "Commit",
-        new_branch: str = "",
+    local_path: Union[str, Path],
+    access_token: str,
+    comments: str = "Commit",
+    new_branch: str = "",
 ) -> GitBranch:
     """
     Pushes changes from a local Git repository to its remote counterpart.
@@ -66,14 +72,14 @@ async def git_push(
 
 @register_tool(tags=["software development", "git", "create a git pull request or merge request"])
 async def git_create_pull(
-        base: str,
-        head: str,
-        base_repo_name: str,
-        access_token: str,
-        head_repo_name: Optional[str] = None,
-        title: Optional[str] = None,
-        body: Optional[str] = None,
-        issue: Optional[Issue] = None,
+    base: str,
+    head: str,
+    base_repo_name: str,
+    access_token: str,
+    head_repo_name: Optional[str] = None,
+    title: Optional[str] = None,
+    body: Optional[str] = None,
+    issue: Optional[Issue] = None,
 ) -> PullRequest:
     """
     Creates a pull request on a Git repository. Use this tool in priority over Browser to create a pull request.

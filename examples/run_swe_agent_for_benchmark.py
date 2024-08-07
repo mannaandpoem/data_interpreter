@@ -38,7 +38,7 @@ async def run(instance, swe_result_dir):
     # 前处理
     terminal = Terminal()
     if not repo_path.exists():
-        print(f"Repo not found, cloning...")
+        print("Repo not found, cloning...")
         clone_command = f"git clone 'https://github.com/{instance['repo']}.git' {repo_path}"
         print(terminal.run_command(clone_command))
     base_commit = instance["base_commit"]
@@ -78,7 +78,7 @@ def save_predictions(swe_agent: SWEAgent, instance, swe_result_dir):
 
 
 async def async_main():
-    dataset_path = "manna-ai/SWE-bench_Nano"  # "princeton-nlp/SWE-bench_Lite" #"manna-ai/SWE-bench_Nano"
+    dataset_path = "manna-ai/SWE-bench_Nano"  # "princeton-nlp/SWE-bench_Lite"
 
     dataset = load_hf_dataset(dataset_name_or_path=dataset_path, cache_dir=DATA_DIR, split="test")
     date_time = datetime.now().strftime("%m%d")

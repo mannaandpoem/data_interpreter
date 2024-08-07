@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import inspect
@@ -6,10 +5,9 @@ import os
 from collections import defaultdict
 from pathlib import Path
 
-import yaml
+from metagpt.logs import logger
 from pydantic import BaseModel
 
-from metagpt.logs import logger
 from di_project.tools.tool_convert import (
     convert_code_to_tool_schema,
     convert_code_to_tool_schema_ast,

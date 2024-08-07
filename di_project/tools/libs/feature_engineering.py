@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import itertools
@@ -385,7 +384,12 @@ class TreeBasedSelection(MLProcess):
 
         dtrain = lgb.Dataset(df[cols], df[self.label_col])
         model = lgb.train(params, dtrain, num_boost_round=100)
-        df_imp = pd.DataFrame({"feature_name": dtrain.feature_name, "importance": model.feature_importance("gain")})
+        df_imp = pd.DataFrame(
+            {
+                "feature_name": dtrain.feature_name,
+                "importance": model.feature_importance("gain"),
+            }
+        )
 
         df_imp.sort_values("importance", ascending=False, inplace=True)
         df_imp = df_imp[df_imp["importance"] > 0]

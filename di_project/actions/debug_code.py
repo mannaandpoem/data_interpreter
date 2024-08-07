@@ -4,7 +4,6 @@ from metagpt.actions import Action
 from metagpt.logs import logger
 from metagpt.schema import Message
 
-
 DEBUG_REFLECTION_EXAMPLE = '''
 Example 1:
 [previous impl]:

@@ -4,17 +4,16 @@ import json
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel, field_validator
-from rank_bm25 import BM25Okapi
-
 from metagpt.llm import LLM
 from metagpt.logs import logger
 from metagpt.utils.common import CodeParser
+from pydantic import BaseModel, field_validator
+from rank_bm25 import BM25Okapi
 
+from di_project.schema import Plan
 from di_project.tools import TOOL_REGISTRY
 from di_project.tools.tool_data_type import Tool
 from di_project.tools.tool_registry import validate_tool_names
-from di_project.schema import Plan
 
 TOOL_INFO_PROMPT = """
 ## Capabilities
@@ -119,7 +118,11 @@ class ToolRecommender(BaseModel):
         raise NotImplementedError
 
     async def rank_tools(
-        self, recalled_tools: list[Tool], context: str = "", plan: Plan = None, topk: int = 5
+        self,
+        recalled_tools: list[Tool],
+        context: str = "",
+        plan: Plan = None,
+        topk: int = 5,
     ) -> list[Tool]:
         """
         Default rank methods for a ToolRecommender. Use LLM to rank the recalled tools based on the given context, plan, and topk value.

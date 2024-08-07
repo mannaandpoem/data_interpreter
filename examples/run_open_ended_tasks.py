@@ -1,9 +1,9 @@
 import os
+
 import fire
 
-from examples.requirements_prompt import OPEN_ENDED_TASKS_REQUIREMENTS
 from di_project.roles.data_interpreter import DataInterpreter
-from di_project.tools.tool_recommend import TypeMatchToolRecommender
+from examples.requirements_prompt import OPEN_ENDED_TASKS_REQUIREMENTS
 
 
 # Ensure Open-Ended Tasks dataset has been downloaded before using this example.

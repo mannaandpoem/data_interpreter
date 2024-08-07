@@ -1,6 +1,7 @@
 import asyncio
 import os
 import typing
+from contextvars import ContextVar
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional, Union
@@ -11,8 +12,6 @@ from aiohttp import ClientSession, UnixConnector
 from playwright.async_api import Page as AsyncPage
 from playwright.sync_api import Page as SyncPage
 from pydantic import BaseModel, Field, PrivateAttr
-
-from contextvars import ContextVar
 
 LLM_STREAM_QUEUE: ContextVar[asyncio.Queue] = ContextVar("llm-stream")
 
@@ -77,7 +76,10 @@ class ResourceReporter(BaseModel):
     block: BlockType = Field(description="The type of block that is reporting the resource")
     uuid: UUID = Field(default_factory=uuid4, description="The unique identifier for the resource")
     enable_llm_stream: bool = Field(False, description="Indicates whether to connect to an LLM stream for reporting")
-    callback_url: str = Field(METAGPT_REPORTER_DEFAULT_URL, description="The URL to which the report should be sent")
+    callback_url: str = Field(
+        METAGPT_REPORTER_DEFAULT_URL,
+        description="The URL to which the report should be sent",
+    )
     _llm_task: Optional[asyncio.Task] = PrivateAttr(None)
 
     def report(self, value: Any, name: str, extra: Optional[dict] = None):
@@ -244,13 +246,21 @@ class BrowserReporter(ResourceReporter):
     def report(self, value: Union[str, SyncPage], name: Literal["url", "page"]):
         """Report browser URL or page content synchronously."""
         if name == "page":
-            value = {"page_url": value.url, "title": value.title(), "screenshot": str(value.screenshot())}
+            value = {
+                "page_url": value.url,
+                "title": value.title(),
+                "screenshot": str(value.screenshot()),
+            }
         return super().report(value, name)
 
     async def async_report(self, value: Union[str, AsyncPage], name: Literal["url", "page"]):
         """Report browser URL or page content asynchronously."""
         if name == "page":
-            value = {"page_url": value.url, "title": await value.title(), "screenshot": str(await value.screenshot())}
+            value = {
+                "page_url": value.url,
+                "title": await value.title(),
+                "screenshot": str(await value.screenshot()),
+            }
         return await super().async_report(value, name)
 
 
@@ -300,19 +310,19 @@ class FileReporter(ResourceReporter):
     """
 
     def report(
-            self,
-            value: Union[Path, dict, Any],
-            name: Literal["path", "meta", "content"] = "path",
-            extra: Optional[dict] = None,
+        self,
+        value: Union[Path, dict, Any],
+        name: Literal["path", "meta", "content"] = "path",
+        extra: Optional[dict] = None,
     ):
         """Report file resource synchronously."""
         return super().report(value, name, extra)
 
     async def async_report(
-            self,
-            value: Union[Path, dict, Any],
-            name: Literal["path", "meta", "content"] = "path",
-            extra: Optional[dict] = None,
+        self,
+        value: Union[Path, dict, Any],
+        name: Literal["path", "meta", "content"] = "path",
+        extra: Optional[dict] = None,
     ):
         """Report file resource asynchronously."""
         return await super().async_report(value, name, extra)

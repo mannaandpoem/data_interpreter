@@ -1,13 +1,13 @@
-import os
 import json
+import os
 
 
 def remove_boxed(s):
     left = "\\boxed{"
     try:
-        assert s[:len(left)] == left
+        assert s[: len(left)] == left
         assert s[-1] == "}"
-        return s[len(left):-1]
+        return s[len(left) : -1]
     except:
         return None
 
@@ -32,10 +32,10 @@ def last_boxed_only_string(string):
                 break
         i += 1
 
-    if right_brace_idx == None:
+    if right_brace_idx is None:
         retval = None
     else:
-        retval = string[idx:right_brace_idx + 1]
+        retval = string[idx : right_brace_idx + 1]
 
     return retval
 
@@ -218,17 +218,16 @@ def get_math_problem(rootdir):
     for subdir, dirs, files in os.walk(rootdir):
         subtopic = os.path.basename(subdir)
         for file in files:
-
             # print(file)
             fnames_list.append(os.path.join(subdir, file))
-            with open(os.path.join(subdir, file), 'r') as fp:
+            with open(os.path.join(subdir, file), "r") as fp:
                 try:
                     problem_data = json.load(fp)
                 except Exception as e:
                     print(f"Error loading JSON from {file}", e)
                     raise e
             prob_level = problem_data["level"]
-            prob_type = problem_data["type"]
+            problem_data["type"]
             try:
                 prob_level = int(prob_level.split("Level ")[1])
             except:

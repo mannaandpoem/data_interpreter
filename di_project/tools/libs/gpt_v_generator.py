@@ -1,4 +1,3 @@
-
 import re
 from pathlib import Path
 
@@ -23,7 +22,10 @@ As the design pays tribute to large companies, sometimes it is normal for some c
 Now, please generate the corresponding webpage code including HTML, CSS and JavaScript:"""
 
 
-@register_tool(tags=["image2webpage"], include_functions=["__init__", "generate_webpages", "save_webpages"])
+@register_tool(
+    tags=["image2webpage"],
+    include_functions=["__init__", "generate_webpages", "save_webpages"],
+)
 class GPTvGenerator:
     """Class for generating webpage code from a given webpage screenshot.
 
@@ -88,7 +90,12 @@ class GPTvGenerator:
 
         extract_and_save_code(folder=webpages_path, text=webpages, pattern="styles?.css", language="css")
 
-        extract_and_save_code(folder=webpages_path, text=webpages, pattern="scripts?.js", language="javascript")
+        extract_and_save_code(
+            folder=webpages_path,
+            text=webpages,
+            pattern="scripts?.js",
+            language="javascript",
+        )
 
         return webpages_path
 

@@ -6,6 +6,7 @@ import threading
 from queue import Queue
 
 from metagpt.const import DEFAULT_WORKSPACE_ROOT, get_metagpt_package_root
+
 from di_project.tools.tool_registry import register_tool
 from di_project.utils.path_utils import converted_path
 from di_project.utils.report import END_MARKER_VALUE, TerminalReporter

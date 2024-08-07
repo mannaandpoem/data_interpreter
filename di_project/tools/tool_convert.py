@@ -12,7 +12,11 @@ def convert_code_to_tool_schema(obj, include: list[str] = None) -> dict:
     # assert docstring, "no docstring found for the objects, skip registering"
 
     if inspect.isclass(obj):
-        schema = {"type": "class", "description": remove_spaces(docstring), "methods": {}}
+        schema = {
+            "type": "class",
+            "description": remove_spaces(docstring),
+            "methods": {},
+        }
         for name, method in inspect.getmembers(obj, inspect.isfunction):
             if name.startswith("_") and name != "__init__":  # skip private methodss
                 continue
@@ -63,7 +67,12 @@ def function_docstring_to_schema(fn_obj, docstring) -> dict:
 
     function_type = "function" if not inspect.iscoroutinefunction(fn_obj) else "async_function"
 
-    return {"type": function_type, "description": overall_desc, "signature": str(signature), "parameters": param_desc}
+    return {
+        "type": function_type,
+        "description": overall_desc,
+        "signature": str(signature),
+        "parameters": param_desc,
+    }
 
 
 def get_class_method_docstring(cls, method_name):
@@ -84,7 +93,11 @@ class CodeVisitor(ast.NodeVisitor):
         self.source_code = source_code
 
     def visit_ClassDef(self, node):
-        class_schemas = {"type": "class", "description": remove_spaces(ast.get_docstring(node)), "methods": {}}
+        class_schemas = {
+            "type": "class",
+            "description": remove_spaces(ast.get_docstring(node)),
+            "methods": {},
+        }
         for body_node in node.body:
             if isinstance(body_node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
                 not body_node.name.startswith("_") or body_node.name == "__init__"
@@ -119,7 +132,12 @@ class CodeVisitor(ast.NodeVisitor):
 
     def _get_function_signature(self, node):
         args = []
-        defaults = dict(zip([arg.arg for arg in node.args.args][-len(node.args.defaults) :], node.args.defaults))
+        defaults = dict(
+            zip(
+                [arg.arg for arg in node.args.args][-len(node.args.defaults) :],
+                node.args.defaults,
+            )
+        )
         for arg in node.args.args:
             arg_str = arg.arg
             if arg.annotation:

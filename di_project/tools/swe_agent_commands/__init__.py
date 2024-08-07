@@ -1,7 +1,7 @@
+import itertools
 import os
 from dataclasses import dataclass
 from typing import Optional
-import itertools
 
 import yaml
 

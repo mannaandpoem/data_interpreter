@@ -2,10 +2,9 @@ import json
 from typing import Tuple
 
 from metagpt.actions import Action
-from metagpt.schema import Message
 from metagpt.utils.common import CodeParser
 
-from di_project.schema import Task, Plan
+from di_project.schema import Plan
 
 CODE_REFLECTION_PROMPT_TEMPLATE = """
 # Context
@@ -43,26 +42,33 @@ MATH_REVIEW_CONTEXT = """
 
 
 class CodeReflection(Action):
-
-    async def run(self, plan: Plan, code='', code_result='',) -> Tuple[str, str, str]:
+    async def run(
+        self,
+        plan: Plan,
+        code="",
+        code_result="",
+    ) -> Tuple[str, str, str]:
         context = self.get_context(plan, code, code_result)
 
-        cr_prompt = CODE_REFLECTION_PROMPT_TEMPLATE.replace('__context__', context, )
+        cr_prompt = CODE_REFLECTION_PROMPT_TEMPLATE.replace(
+            "__context__",
+            context,
+        )
         cr = await self._aask(cr_prompt)
         cr = CodeParser.parse_code(block=None, text=cr)
         try:
             cr = json.loads(cr)
         except:
-            cr = cr.replace('\\', '\\\\')
+            cr = cr.replace("\\", "\\\\")
             cr = json.loads(cr)
 
-        summary = ''
+        summary = ""
         status = False
-        suggestion = ''
-        if 'status' in cr and 'summary' in cr and 'suggestion' in cr:
-            summary = cr['summary']
-            status = cr['status']
-            suggestion = cr['suggestion']
+        suggestion = ""
+        if "status" in cr and "summary" in cr and "suggestion" in cr:
+            summary = cr["summary"]
+            status = cr["status"]
+            suggestion = cr["suggestion"]
 
         return summary, status, suggestion
 
@@ -75,6 +81,9 @@ class CodeReflection(Action):
 
         tasks = json.dumps([process_task(task) for task in plan.tasks], indent=4, ensure_ascii=False)
         context = MATH_REVIEW_CONTEXT.format(
-            user_requirement=user_requirement, tasks=tasks, code=code, result=runtime_result
+            user_requirement=user_requirement,
+            tasks=tasks,
+            code=code,
+            result=runtime_result,
         )
         return context

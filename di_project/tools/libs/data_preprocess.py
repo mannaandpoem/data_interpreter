@@ -92,7 +92,10 @@ class FillMissingValue(DataPreprocessTool):
     """
 
     def __init__(
-        self, features: list, strategy: Literal["mean", "median", "most_frequent", "constant"] = "mean", fill_value=None
+        self,
+        features: list,
+        strategy: Literal["mean", "median", "most_frequent", "constant"] = "mean",
+        fill_value=None,
     ):
         """
         Initialize self.

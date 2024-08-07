@@ -3,21 +3,19 @@ from __future__ import annotations
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator
-
 from metagpt.logs import logger
 from metagpt.roles import Role
 from metagpt.schema import Message
 from metagpt.utils.common import CodeParser
+from pydantic import Field, model_validator
 
 from di_project.actions.ask_review import ReviewConst
 from di_project.actions.execute_nb_code import ExecuteNbCode
 from di_project.actions.write_analysis_code import CheckData, WriteAnalysisCode
+from di_project.prompts.write_analysis_code import DATA_INFO
 from di_project.schema import Task, TaskResult
 from di_project.strategy.task_type import TaskType
 from di_project.tools.tool_recommend import BM25ToolRecommender, ToolRecommender
-from di_project.prompts.write_analysis_code import DATA_INFO
-
 
 REACT_THINK_PROMPT = """
 # User Requirement
@@ -50,9 +48,13 @@ class DataInterpreter(Role):
 
     @model_validator(mode="after")
     def set_plan_and_tool(self) -> "Interpreter":
-        self._set_react_mode(react_mode=self.react_mode, max_react_loop=self.max_react_loop, auto_run=self.auto_run)
+        self._set_react_mode(
+            react_mode=self.react_mode,
+            max_react_loop=self.max_react_loop,
+            auto_run=self.auto_run,
+        )
         self.use_plan = (
-                self.react_mode == "plan_and_act"
+            self.react_mode == "plan_and_act"
         )  # create a flag for convenience, overwrite any passed-in value
         if self.tools and not self.tool_recommender:
             self.tool_recommender = BM25ToolRecommender(tools=self.tools)
@@ -94,6 +96,7 @@ class DataInterpreter(Role):
             rsp = await super()._plan_and_act()
             if self.use_experience:
                 from di_project.actions.use_experience import AddNewTrajectories
+
                 await AddNewTrajectories().run(
                     self.planner
                 )  # extract trajectories based on the execution status of each task in the planner
@@ -108,6 +111,7 @@ class DataInterpreter(Role):
         # retrieve past tasks for this task
         if self.use_experience:
             from di_project.actions.use_experience import RetrieveExperiences
+
             experiences = await RetrieveExperiences().run(query=current_task.instruction)
         else:
             experiences = ""
@@ -138,7 +142,10 @@ class DataInterpreter(Role):
         while not success and counter < max_retry:
             ### write code ###
             code, cause_by = await self._write_code(
-                counter, plan_status, tool_info, experiences=experiences if counter == 0 else ""
+                counter,
+                plan_status,
+                tool_info,
+                experiences=experiences if counter == 0 else "",
             )
 
             self.working_memory.add(Message(content=code, role="assistant", cause_by=cause_by))
@@ -160,7 +167,13 @@ class DataInterpreter(Role):
 
         return code, result, success
 
-    async def _write_code(self, counter: int, plan_status: str = "", tool_info: str = "", experiences: str = ""):
+    async def _write_code(
+        self,
+        counter: int,
+        plan_status: str = "",
+        tool_info: str = "",
+        experiences: str = "",
+    ):
         todo = self.rc.todo  # todo is WriteAnalysisCode
         logger.info(f"ready to {todo.name}")
         use_reflection = counter > 0 and self.use_reflection  # only use reflection after the first trial
@@ -180,14 +193,14 @@ class DataInterpreter(Role):
 
     async def _check_data(self):
         if (
-                not self.use_plan
-                or not self.planner.plan.get_finished_tasks()
-                or self.planner.plan.current_task.task_type
-                not in [
-            TaskType.DATA_PREPROCESS.type_name,
-            TaskType.FEATURE_ENGINEERING.type_name,
-            TaskType.MODEL_TRAIN.type_name,
-        ]
+            not self.use_plan
+            or not self.planner.plan.get_finished_tasks()
+            or self.planner.plan.current_task.task_type
+            not in [
+                TaskType.DATA_PREPROCESS.type_name,
+                TaskType.FEATURE_ENGINEERING.type_name,
+                TaskType.MODEL_TRAIN.type_name,
+            ]
         ):
             return
         logger.info("Check updated data")

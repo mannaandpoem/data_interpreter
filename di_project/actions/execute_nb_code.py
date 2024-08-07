@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import asyncio
@@ -7,6 +6,8 @@ import re
 from typing import Literal, Tuple
 
 import nbformat
+from metagpt.actions import Action
+from metagpt.logs import logger
 from nbclient import NotebookClient
 from nbclient.exceptions import CellTimeoutError, DeadKernelError
 from nbformat import NotebookNode
@@ -17,9 +18,6 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.syntax import Syntax
-
-from metagpt.actions import Action
-from metagpt.logs import logger
 
 
 class ExecuteNbCode(Action):
@@ -109,7 +107,12 @@ class ExecuteNbCode(Action):
             output_text = ""
             if output["output_type"] == "stream" and not any(
                 tag in output["text"]
-                for tag in ["| INFO     | di-project", "| ERROR    | di-project", "| WARNING  | di-project", "DEBUG"]
+                for tag in [
+                    "| INFO     | di-project",
+                    "| ERROR    | di-project",
+                    "| WARNING  | di-project",
+                    "DEBUG",
+                ]
             ):
                 output_text = output["text"]
             elif output["output_type"] == "display_data":

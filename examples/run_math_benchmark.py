@@ -1,13 +1,12 @@
-import os
-import asyncio
-import pandas as pd
-
 import argparse
+import asyncio
+import os
 
+import pandas as pd
 from metagpt.logs import logger
-from di_project.roles.data_interpreter_math import DataInterpreterMath
-from di_project.math_utils import get_math_problem, is_equiv, get_answer
 
+from di_project.math_utils import get_answer, get_math_problem, is_equiv
+from di_project.roles.data_interpreter_math import DataInterpreterMath
 
 
 def parse_args():
@@ -17,20 +16,41 @@ def parse_args():
     parser.add_argument("--vote_num", dest="vote_num", help="vote_num", default=1, type=int)
 
     parser.add_argument("--seed", dest="seed", help="seed", default=2, type=int)
-    parser.add_argument("--folder", "-f", dest="folder", help="saving folder", default="./math_experiment", type=str)
-    parser.add_argument("--dataset_path", "-d", dest="dataset_path", help="dataset_path", default="./di_dataset/MATH", type=str)
+    parser.add_argument(
+        "--folder",
+        "-f",
+        dest="folder",
+        help="saving folder",
+        default="./math_experiment",
+        type=str,
+    )
+    parser.add_argument(
+        "--dataset_path",
+        "-d",
+        dest="dataset_path",
+        help="dataset_path",
+        default="./di_dataset/MATH",
+        type=str,
+    )
 
     args = parser.parse_args()
     args.folder = (
-        args.folder + "_" + str(args.categories) + "_" +
-        str(args.level) + "_" + str(args.vote_num) + "_" + str(args.seed)
+        args.folder
+        + "_"
+        + str(args.categories)
+        + "_"
+        + str(args.level)
+        + "_"
+        + str(args.vote_num)
+        + "_"
+        + str(args.seed)
     )
 
     os.makedirs(args.folder, exist_ok=True)
     return args
 
 
-async def solve_problem(problem="",  answer="", vote_num: int = 3):
+async def solve_problem(problem="", answer="", vote_num: int = 3):
     csv_result_list = []
     run_status_list = []
     mg_answer_list = []
@@ -38,7 +58,7 @@ async def solve_problem(problem="",  answer="", vote_num: int = 3):
     for vid in range(vote_num):
         role = DataInterpreterMath()
         try:
-            rsp = await role.run(problem)
+            await role.run(problem)
             run_status = True
         except Exception as e:
             logger.error(f"Error {e}")
@@ -58,9 +78,9 @@ async def solve_problem(problem="",  answer="", vote_num: int = 3):
 
     # voting weight
     weight_map = {
-        'true': 1,
-        'uncertain': 0.5,
-        'false': 0.2,
+        "true": 1,
+        "uncertain": 0.5,
+        "false": 0.2,
     }
     csv_result_weight_list = [weight_map[cr] for cr in csv_result_list]
 
@@ -90,17 +110,17 @@ async def solve_problem(problem="",  answer="", vote_num: int = 3):
 def main():
     args = parse_args()
     categories_map = {
-        0: 'algebra',
-        1: 'counting_and_probability',
-        2: 'geometry',
-        3: 'intermediate_algebra',
-        4: 'number_theory',
-        5: 'prealgebra',
-        6: 'precalculus',
+        0: "algebra",
+        1: "counting_and_probability",
+        2: "geometry",
+        3: "intermediate_algebra",
+        4: "number_theory",
+        5: "prealgebra",
+        6: "precalculus",
     }
     topic = categories_map[args.categories]
-    problem_dir = os.path.join(args.dataset_path, 'test')
-    record_df_path = os.path.join(args.folder, 'records.csv')
+    problem_dir = os.path.join(args.dataset_path, "test")
+    record_df_path = os.path.join(args.folder, "records.csv")
 
     math_problem = get_math_problem(problem_dir)
     problems = {}
@@ -109,30 +129,32 @@ def main():
             for f in math_problem[topic][l]:
                 problems[f] = math_problem[topic][l][f]
 
-    logger.info(f'problems num : {len(problems)}')
+    logger.info(f"problems num : {len(problems)}")
     problem_file_names = pd.Series(list(problems)).sample(frac=1, random_state=args.seed).to_list()
-    logger.info(f'problem_file_names  : {problem_file_names[:5]}')
+    logger.info(f"problem_file_names  : {problem_file_names[:5]}")
 
     if os.path.exists(record_df_path):
         record_df = pd.read_csv(record_df_path, index_col=0)
     else:
-        record_df = pd.DataFrame(columns=['file', 'problem', 'level', 'answer', 'mg_answer', 'is_equiv'])
-    experiment_records = record_df['is_equiv'].to_list()
+        record_df = pd.DataFrame(columns=["file", "problem", "level", "answer", "mg_answer", "is_equiv"])
+    experiment_records = record_df["is_equiv"].to_list()
 
     for fid, f in enumerate(problem_file_names):
-        if f in record_df['file'].to_list():
-            logger.info(f'{f} is finish')
+        if f in record_df["file"].to_list():
+            logger.info(f"{f} is finish")
             continue
 
         problem, answer, level = problems[f]
-        logger.info(f'problem : {problem}')
-        logger.info(f'answer : {answer}')
-        logger.info(f'level : {level}')
+        logger.info(f"problem : {problem}")
+        logger.info(f"answer : {answer}")
+        logger.info(f"level : {level}")
 
         ie, mg_answer = asyncio.run(solve_problem(problem=problem, answer=answer, vote_num=args.vote_num))
         experiment_records.append(ie)
-        logger.info(f'exp_records : {experiment_records}')
-        logger.info(f'exp_records statis : {sum(experiment_records), len(experiment_records), sum(experiment_records) / len(experiment_records)}', )
+        logger.info(f"exp_records : {experiment_records}")
+        logger.info(
+            f"exp_records statis : {sum(experiment_records), len(experiment_records), sum(experiment_records) / len(experiment_records)}",
+        )
 
         record_df.loc[len(record_df)] = [f, problem, level, answer, mg_answer, ie]
         record_df.to_csv(record_df_path)

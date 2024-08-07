@@ -1,9 +1,10 @@
 import shutil
 from pathlib import Path
 from typing import Union
-from metagpt.logs import logger
 
 import regex
+from metagpt.logs import logger
+
 
 def converted_path(windows_path):
     p = Path(windows_path)
@@ -23,6 +24,7 @@ def converted_back_to_windows(wsl_path):
     # 生成Windows路径
     windows_path = Path(drive + "\\").joinpath(*rest_of_path)
     return windows_path.as_posix().replace("/", "\\")
+
 
 def find_exist_repo_path_and_cp(repo_path: Path) -> Union[Path, None]:
     """find an first existed repo path with same repo name, no need to clone different version with same repo"""

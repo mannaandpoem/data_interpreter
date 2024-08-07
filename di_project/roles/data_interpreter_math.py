@@ -1,11 +1,12 @@
-from pydantic import BaseModel, ConfigDict, Field
 from metagpt.logs import logger
-from metagpt.schema import Message, MessageQueue, SerializationMixin
 from metagpt.roles.role import Role, RoleReactMode
-from di_project.actions.execute_nb_code import ExecuteNbCode
-from di_project.actions.debug_code import DebugCode
-from di_project.actions.code_self_verification import CodeSelfVerification
+from metagpt.schema import Message
+from pydantic import Field
+
 from di_project.actions.code_reflection import CodeReflection
+from di_project.actions.code_self_verification import CodeSelfVerification
+from di_project.actions.debug_code import DebugCode
+from di_project.actions.execute_nb_code import ExecuteNbCode
 from di_project.actions.math_output_answer import MathOutputAnswer
 from di_project.actions.math_write_code import MathWriteCode
 from di_project.strategy.math_planner import MathPlanner
@@ -15,8 +16,8 @@ class DataInterpreterMath(Role):
     name: str = "Gauss"
     profile: str = "DataInterpreterMath"
     found_answer: bool = False
-    answer: str = ''
-    csv_result: str = ''
+    answer: str = ""
+    csv_result: str = ""
 
     planner: MathPlanner = Field(default_factory=MathPlanner)
     execute_code: ExecuteNbCode = Field(default_factory=ExecuteNbCode, exclude=True)
@@ -32,14 +33,23 @@ class DataInterpreterMath(Role):
     def working_memory(self):
         return self.rc.working_memory
 
-    def set_react_mode(self, react_mode: str, max_react_loop: int = 1, auto_run: bool = True, use_tools: bool = False):
+    def set_react_mode(
+        self,
+        react_mode: str,
+        max_react_loop: int = 1,
+        auto_run: bool = True,
+        use_tools: bool = False,
+    ):
         assert react_mode in RoleReactMode.values(), f"react_mode must be one of {RoleReactMode.values()}"
         self.rc.react_mode = react_mode
         if react_mode == RoleReactMode.REACT:
             self.rc.max_react_loop = max_react_loop
         elif react_mode == RoleReactMode.PLAN_AND_ACT:
             self.planner = MathPlanner(
-                goal=self.goal, working_memory=self.rc.working_memory, auto_run=auto_run, use_tools=use_tools
+                goal=self.goal,
+                working_memory=self.rc.working_memory,
+                auto_run=auto_run,
+                use_tools=use_tools,
             )
 
     async def _plan_and_act(self) -> Message:
@@ -53,8 +63,8 @@ class DataInterpreterMath(Role):
         found_answer = False
         plan_count = 0
         max_retry = 3
-        answer = ''
-        csv_result = ''
+        answer = ""
+        csv_result = ""
         while not found_answer and plan_count < max_retry:
             found_answer, answer, csv_result = await self.act_on_plan()
             if not found_answer:
@@ -78,29 +88,32 @@ class DataInterpreterMath(Role):
         csv_code, csv_code_result, csv_success = await CodeSelfVerification().run(
             plan=self.planner.plan, answer=answer, execute_code=self.execute_code
         )
-        csv_result_is_true = 'true' in csv_code_result.lower()
-        csv_result_is_false = 'false' in csv_code_result.lower()
+        csv_result_is_true = "true" in csv_code_result.lower()
+        csv_result_is_false = "false" in csv_code_result.lower()
 
         if csv_result_is_true:
-            csv_result = 'true'
+            csv_result = "true"
         elif csv_result_is_false:
-            csv_result = 'false'
+            csv_result = "false"
         else:
-            csv_result = 'likely'
+            csv_result = "likely"
 
         if not csv_success or not csv_result_is_true:
-            code_summary, code_reflection_confirmed, suggestion = \
-                await CodeReflection().run(
-                    plan=self.planner.plan,
-                    code=code,
-                    code_result=result,
-                )
+            (
+                code_summary,
+                code_reflection_confirmed,
+                suggestion,
+            ) = await CodeReflection().run(
+                plan=self.planner.plan,
+                code=code,
+                code_result=result,
+            )
 
             self.planner.working_memory.add(
                 Message(
-                    content=result + '\n' + '--------' + '\n' + 'suggestion : ' + suggestion,
+                    content=result + "\n" + "--------" + "\n" + "suggestion : " + suggestion,
                     role="user",
-                    cause_by=ExecuteNbCode
+                    cause_by=ExecuteNbCode,
                 )
             )
 
@@ -120,7 +133,7 @@ class DataInterpreterMath(Role):
             context = self.planner.get_last_useful_memories(num=3)
 
             if counter > 0:
-                logger.warning('We got a bug code, now start to debug...')
+                logger.warning("We got a bug code, now start to debug...")
                 code = await DebugCode().run(
                     context=None,
                     code=code,
@@ -130,12 +143,13 @@ class DataInterpreterMath(Role):
                 cause_by = DebugCode
                 # break
             else:
-                code = await MathWriteCode().run(context=context, plan=self.planner.plan,)
+                code = await MathWriteCode().run(
+                    context=context,
+                    plan=self.planner.plan,
+                )
                 cause_by = MathWriteCode
 
-            self.planner.working_memory.add(
-                Message(content=code["code"], role="assistant", cause_by=cause_by)
-            )
+            self.planner.working_memory.add(Message(content=code["code"], role="assistant", cause_by=cause_by))
 
             result, success = await self.execute_code.run(**code)
             counter += 1

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import json
@@ -41,7 +40,9 @@ class WritePlan(Action):
     async def run(self, context: list[Message], max_tasks: int = 5) -> str:
         task_type_desc = "\n".join([f"- **{tt.type_name}**: {tt.value.desc}" for tt in TaskType])
         prompt = self.PROMPT_TEMPLATE.format(
-            context="\n".join([str(ct) for ct in context]), max_tasks=max_tasks, task_type_desc=task_type_desc
+            context="\n".join([str(ct) for ct in context]),
+            max_tasks=max_tasks,
+            task_type_desc=task_type_desc,
         )
         rsp = await self._aask(prompt)
         rsp = CodeParser.parse_code(block=None, text=rsp)
